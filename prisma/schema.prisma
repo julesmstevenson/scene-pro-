@@ -8,7 +8,7 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-// ─── AUTH (NextAuth) ──────────────────────────────────────────────────────────
+// ─── NextAuth ────────────────────────────────────────────────────────────────
 
 model Account {
   id                String  @id @default(cuid())
@@ -45,8 +45,6 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
-// ─── USERS ────────────────────────────────────────────────────────────────────
-
 model User {
   id             String    @id @default(cuid())
   name           String?
@@ -54,362 +52,54 @@ model User {
   emailVerified  DateTime?
   image          String?
   hashedPassword String?
-  role           GlobalRole @default(USER)
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 
-  accounts    Account[]
-  sessions    Session[]
-  memberships TheaterMembership[]
+  accounts Account[]
+  sessions Session[]
 }
 
-enum GlobalRole {
-  SUPERADMIN
-  USER
-}
+// ─── Business models ─────────────────────────────────────────────────────────
 
-// ─── MULTI-TENANT: THEATERS ───────────────────────────────────────────────────
-
-model Theater {
-  id              String   @id @default(cuid())
-  name            String
-  slug            String   @unique
-  description     String?
-  logo            String?
-  address         String?
-  city            String?
-  postalCode      String?
-  country         String   @default("FR")
-  phone           String?
-  email           String?
-  website         String?
-  stripeAccountId String?
-  settings        Json     @default("{}")
-  isActive        Boolean  @default(true)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  memberships TheaterMembership[]
-  venues      Venue[]
-  shows       Show[]
-  contracts   ResellerContract[]
-  spectators  Spectator[]
-}
-
-model TheaterMembership {
-  id        String      @id @default(cuid())
-  userId    String
-  theaterId String
-  role      TheaterRole @default(STAFF)
-  createdAt DateTime    @default(now())
-
-  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  theater Theater @relation(fields: [theaterId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, theaterId])
-}
-
-enum TheaterRole {
-  OWNER
-  ADMIN
-  STAFF
-  BOX_OFFICE
-}
-
-// ─── VENUES & SEATING ─────────────────────────────────────────────────────────
-
-model Venue {
+model Theatre {
   id          String   @id @default(cuid())
-  theaterId   String
   name        String
+  slug        String   @unique
   description String?
-  capacity    Int
-  layout      Json     @default("{}")
+  city        String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  theater Theater       @relation(fields: [theaterId], references: [id])
-  zones   SeatingZone[]
-  shows   Show[]
+  events Event[]
 }
 
-model SeatingZone {
-  id        String @id @default(cuid())
-  venueId   String
-  name      String
-  color     String @default("#6366f1")
-  capacity  Int
-  sortOrder Int    @default(0)
-
-  venue    Venue            @relation(fields: [venueId], references: [id], onDelete: Cascade)
-  seats    Seat[]
-  pricings SessionPricing[]
-}
-
-model Seat {
-  id      String     @id @default(cuid())
-  zoneId  String
-  row     String
-  number  Int
-  label   String
-  x       Float?
-  y       Float?
-  status  SeatStatus @default(ACTIVE)
-
-  zone    SeatingZone @relation(fields: [zoneId], references: [id], onDelete: Cascade)
-  tickets Ticket[]
-}
-
-enum SeatStatus {
-  ACTIVE
-  INACTIVE
-  BLOCKED
-}
-
-// ─── SHOWS & SESSIONS ─────────────────────────────────────────────────────────
-
-model Show {
+model Event {
   id          String   @id @default(cuid())
-  theaterId   String
-  venueId     String?
+  theatreId   String
   title       String
   description String?
-  genre       String?
-  duration    Int?
-  ageRating   String?
-  poster      String?
-  banner      String?
-  isPublished Boolean  @default(false)
+  date        DateTime
+  capacity    Int      @default(100)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  theater  Theater       @relation(fields: [theaterId], references: [id])
-  venue    Venue?        @relation(fields: [venueId], references: [id])
-  sessions ShowSession[]
-}
-
-model ShowSession {
-  id        String        @id @default(cuid())
-  showId    String
-  startsAt  DateTime
-  endsAt    DateTime?
-  status    SessionStatus @default(SCHEDULED)
-  capacity  Int?
-  notes     String?
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
-
-  show           Show              @relation(fields: [showId], references: [id])
-  pricings       SessionPricing[]
-  reservations   Reservation[]
-  resellerQuotas ResellerQuota[]
-}
-
-enum SessionStatus {
-  SCHEDULED
-  OPEN
-  SOLD_OUT
-  CANCELLED
-  COMPLETED
-}
-
-model SessionPricing {
-  id        String @id @default(cuid())
-  sessionId String
-  zoneId    String
-  name      String
-  price     Int
-  currency  String @default("EUR")
-
-  session ShowSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  zone    SeatingZone @relation(fields: [zoneId], references: [id])
+  theatre Theatre  @relation(fields: [theatreId], references: [id])
   tickets Ticket[]
-
-  @@unique([sessionId, zoneId, name])
-}
-
-// ─── RESELLER NETWORK ─────────────────────────────────────────────────────────
-
-model Reseller {
-  id        String   @id @default(cuid())
-  name      String
-  email     String   @unique
-  phone     String?
-  address   String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  contracts ResellerContract[]
-}
-
-model ResellerContract {
-  id             String         @id @default(cuid())
-  resellerId     String
-  theaterId      String
-  commissionRate Float
-  status         ContractStatus @default(ACTIVE)
-  startDate      DateTime
-  endDate        DateTime?
-  notes          String?
-  createdAt      DateTime       @default(now())
-
-  reseller     Reseller        @relation(fields: [resellerId], references: [id])
-  theater      Theater         @relation(fields: [theaterId], references: [id])
-  quotas       ResellerQuota[]
-  reservations Reservation[]
-
-  @@unique([resellerId, theaterId])
-}
-
-enum ContractStatus {
-  ACTIVE
-  SUSPENDED
-  TERMINATED
-}
-
-model ResellerQuota {
-  id         String   @id @default(cuid())
-  contractId String
-  sessionId  String
-  allocated  Int
-  sold       Int      @default(0)
-  createdAt  DateTime @default(now())
-
-  contract ResellerContract @relation(fields: [contractId], references: [id])
-  session  ShowSession      @relation(fields: [sessionId], references: [id])
-
-  @@unique([contractId, sessionId])
-}
-
-// ─── CRM: SPECTATORS & LOYALTY ────────────────────────────────────────────────
-
-model Spectator {
-  id          String    @id @default(cuid())
-  theaterId   String
-  userId      String?
-  firstName   String
-  lastName    String
-  email       String
-  phone       String?
-  birthDate   DateTime?
-  address     String?
-  city        String?
-  preferences Json      @default("{}")
-  notes       String?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  theater        Theater         @relation(fields: [theaterId], references: [id])
-  reservations   Reservation[]
-  loyaltyAccount LoyaltyAccount?
-
-  @@unique([theaterId, email])
-}
-
-model LoyaltyAccount {
-  id          String       @id @default(cuid())
-  spectatorId String       @unique
-  level       LoyaltyLevel @default(BRONZE)
-  points      Int          @default(0)
-  totalSpent  Int          @default(0)
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-
-  spectator    Spectator            @relation(fields: [spectatorId], references: [id])
-  transactions LoyaltyTransaction[]
-}
-
-enum LoyaltyLevel {
-  BRONZE
-  SILVER
-  GOLD
-  PLATINUM
-}
-
-model LoyaltyTransaction {
-  id          String          @id @default(cuid())
-  accountId   String
-  type        TransactionType
-  points      Int
-  description String?
-  createdAt   DateTime        @default(now())
-
-  account LoyaltyAccount @relation(fields: [accountId], references: [id])
-}
-
-enum TransactionType {
-  EARN
-  REDEEM
-  EXPIRE
-  ADJUSTMENT
-}
-
-// ─── RESERVATIONS & TICKETS ───────────────────────────────────────────────────
-
-model Reservation {
-  id               String            @id @default(cuid())
-  sessionId        String
-  spectatorId      String?
-  contractId       String?
-  reference        String            @unique @default(cuid())
-  status           ReservationStatus @default(PENDING)
-  totalAmount      Int
-  commissionAmount Int?
-  notes            String?
-  expiresAt        DateTime?
-  createdAt        DateTime          @default(now())
-  updatedAt        DateTime          @updatedAt
-
-  session   ShowSession       @relation(fields: [sessionId], references: [id])
-  spectator Spectator?        @relation(fields: [spectatorId], references: [id])
-  contract  ResellerContract? @relation(fields: [contractId], references: [id])
-  tickets   Ticket[]
-  payment   Payment?
-}
-
-enum ReservationStatus {
-  PENDING
-  CONFIRMED
-  CANCELLED
-  REFUNDED
-  EXPIRED
 }
 
 model Ticket {
-  id            String    @id @default(cuid())
-  reservationId String
-  seatId        String
-  pricingId     String
-  qrCode        String    @unique @default(cuid())
-  isCheckedIn   Boolean   @default(false)
-  checkedInAt   DateTime?
+  id        String       @id @default(cuid())
+  eventId   String
+  reference String       @unique @default(cuid())
+  price     Int
+  status    TicketStatus @default(AVAILABLE)
+  createdAt DateTime     @default(now())
 
-  reservation Reservation    @relation(fields: [reservationId], references: [id])
-  seat        Seat           @relation(fields: [seatId], references: [id])
-  pricing     SessionPricing @relation(fields: [pricingId], references: [id])
+  event Event @relation(fields: [eventId], references: [id])
 }
 
-// ─── PAYMENTS ─────────────────────────────────────────────────────────────────
-
-model Payment {
-  id                    String        @id @default(cuid())
-  reservationId         String        @unique
-  stripePaymentIntentId String?       @unique
-  amount                Int
-  currency              String        @default("EUR")
-  status                PaymentStatus @default(PENDING)
-  method                String?
-  paidAt                DateTime?
-  refundedAt            DateTime?
-  createdAt             DateTime      @default(now())
-
-  reservation Reservation @relation(fields: [reservationId], references: [id])
-}
-
-enum PaymentStatus {
-  PENDING
-  PAID
-  FAILED
-  REFUNDED
-  PARTIALLY_REFUNDED
+enum TicketStatus {
+  AVAILABLE
+  RESERVED
+  SOLD
 }

@@ -1,15 +1,18 @@
 import type { Metadata } from 'next'
+import { Providers } from './providers'
 import './globals.css'
 
 export const metadata: Metadata = {
   title: { default: 'Scène Pro', template: '%s | Scène Pro' },
-  description: 'La plateforme de billetterie pour les théâtres professionnels',
+  description: 'Billetterie pour théâtres professionnels',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="fr">
-      <body>{children}</body>
+      <body>
+        <Providers>{children}</Providers>
+      </body>
     </html>
   )
 }
