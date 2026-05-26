@@ -8,98 +8,40 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-// ─── NextAuth ────────────────────────────────────────────────────────────────
+// ─── Spectacles ───────────────────────────────────────────────────────────────
 
-model Account {
-  id                String  @id @default(cuid())
-  userId            String
-  type              String
-  provider          String
-  providerAccountId String
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
-  expires_at        Int?
-  token_type        String?
-  scope             String?
-  id_token          String? @db.Text
-  session_state     String?
+model Event {
+  id          String      @id @default(cuid())
+  title       String      @default("")
+  description String?     @db.Text
+  imageUrl    String?     @db.Text
+  status      EventStatus @default(DRAFT)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessions        Session[]
+  priceCategories PriceCategory[]
+}
 
-  @@unique([provider, providerAccountId])
+enum EventStatus {
+  DRAFT
+  PUBLISHED
 }
 
 model Session {
-  id           String   @id @default(cuid())
-  sessionToken String   @unique
-  userId       String
-  expires      DateTime
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id      String @id @default(cuid())
+  eventId String
+  date    String // "YYYY-MM-DD"
+  time    String // "HH:MM"
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
 }
 
-model VerificationToken {
-  identifier String
-  token      String   @unique
-  expires    DateTime
+model PriceCategory {
+  id      String @id @default(cuid())
+  eventId String
+  name    String
+  price   Int    // centimes
 
-  @@unique([identifier, token])
-}
-
-model User {
-  id             String    @id @default(cuid())
-  name           String?
-  email          String    @unique
-  emailVerified  DateTime?
-  image          String?
-  hashedPassword String?
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-
-  accounts Account[]
-  sessions Session[]
-}
-
-// ─── Business models ─────────────────────────────────────────────────────────
-
-model Theatre {
-  id          String   @id @default(cuid())
-  name        String
-  slug        String   @unique
-  description String?
-  city        String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  events Event[]
-}
-
-model Event {
-  id          String   @id @default(cuid())
-  theatreId   String
-  title       String
-  description String?
-  date        DateTime
-  capacity    Int      @default(100)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  theatre Theatre  @relation(fields: [theatreId], references: [id])
-  tickets Ticket[]
-}
-
-model Ticket {
-  id        String       @id @default(cuid())
-  eventId   String
-  reference String       @unique @default(cuid())
-  price     Int
-  status    TicketStatus @default(AVAILABLE)
-  createdAt DateTime     @default(now())
-
-  event Event @relation(fields: [eventId], references: [id])
-}
-
-enum TicketStatus {
-  AVAILABLE
-  RESERVED
-  SOLD
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
 }

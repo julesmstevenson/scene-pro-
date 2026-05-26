@@ -1,11 +1,10 @@
-import type { Theatre, Event, Ticket, TicketStatus, User } from '@prisma/client'
+import type { Event, Session, PriceCategory, EventStatus } from '@prisma/client'
 
-export type { Theatre, Event, Ticket, TicketStatus, User }
+export type { Event, Session, PriceCategory, EventStatus }
 
-export type EventWithTickets = Event & {
-  theatre: Theatre
-  tickets: Ticket[]
-  _count: { tickets: number }
+export type EventWithDetails = Event & {
+  sessions: Session[]
+  priceCategories: PriceCategory[]
 }
 
 export type ApiSuccess<T> = { data: T; error?: never }
