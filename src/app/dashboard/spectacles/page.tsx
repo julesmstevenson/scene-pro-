@@ -5,7 +5,7 @@ import type { EventWithDetails } from '@/types'
 async function getEvents(): Promise<EventWithDetails[]> {
   try {
     return await prisma.event.findMany({
-      include: { sessions: true, priceCategories: true },
+      include: { sessions: true, priceCategories: true, castMembers: true, creativeTeam: true },
       orderBy: { updatedAt: 'desc' },
     })
   } catch {
