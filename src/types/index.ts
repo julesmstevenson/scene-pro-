@@ -11,14 +11,3 @@ export type EventWithTickets = Event & {
 export type ApiSuccess<T> = { data: T; error?: never }
 export type ApiError    = { error: string; data?: never }
 export type ApiResponse<T> = ApiSuccess<T> | ApiError
-
-declare module 'next-auth' {
-  interface Session {
-    user: {
-      id: string
-      name?: string | null
-      email?: string | null
-      image?: string | null
-    }
-  }
-}
