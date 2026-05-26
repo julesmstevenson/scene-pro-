@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, useId } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   SpectacleCard, CardTemplate, CardData, TEMPLATES, CARD_W, CARD_H,
@@ -32,9 +32,15 @@ async function resizeImage(file: File, maxW = 1200): Promise<string> {
 
 interface SessionRow { id: string; date: string; time: string }
 interface PriceRow   { id: string; name: string; price: string }
-interface PersonRow  { id: string; role: string; name: string }
+interface PersonRow  { id: string; role: string; name: string; artistId?: string }
 type SaveStatus = 'idle' | 'saving' | 'saved'
 type Tab = 'infos' | 'distribution' | 'seances' | 'apercu'
+
+interface ArtistSuggestion {
+  id:       string
+  name:     string
+  photoUrl: string | null
+}
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
@@ -57,6 +63,125 @@ const GENRE_SUGGESTIONS = [
 ]
 
 // ─── Sous-composants ──────────────────────────────────────────────────────────
+
+function ArtistAutocomplete({
+  value,
+  artistId,
+  onChange,
+  placeholder,
+}: {
+  value:       string
+  artistId?:   string
+  onChange:    (name: string, artistId?: string) => void
+  placeholder?: string
+}) {
+  const [query,        setQuery]        = useState(value)
+  const [suggestions,  setSuggestions]  = useState<ArtistSuggestion[]>([])
+  const [open,         setOpen]         = useState(false)
+  const debounceRef                      = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const containerRef                     = useRef<HTMLDivElement>(null)
+  const inputId                          = useId()
+
+  // Sync external value changes
+  useEffect(() => { setQuery(value) }, [value])
+
+  function handleInput(e: React.ChangeEvent<HTMLInputElement>) {
+    const val = e.target.value
+    setQuery(val)
+    onChange(val, undefined) // clear artistId when typing freely
+
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    if (!val.trim()) { setSuggestions([]); setOpen(false); return }
+
+    debounceRef.current = setTimeout(async () => {
+      try {
+        const res  = await fetch(`/api/artists?search=${encodeURIComponent(val)}`)
+        if (!res.ok) return
+        const json = await res.json()
+        setSuggestions(json.data ?? [])
+        setOpen(true)
+      } catch {
+        // silently ignore fetch errors in autocomplete
+      }
+    }, 250)
+  }
+
+  function handleSelect(artist: ArtistSuggestion) {
+    setQuery(artist.name)
+    onChange(artist.name, artist.id)
+    setSuggestions([])
+    setOpen(false)
+  }
+
+  function handleBlur() {
+    // Small delay so a click on a suggestion registers first
+    setTimeout(() => setOpen(false), 150)
+  }
+
+  function initials(name: string) {
+    return name.split(' ').slice(0, 2).map(p => p[0]?.toUpperCase() ?? '').join('')
+  }
+
+  return (
+    <div ref={containerRef} className="relative">
+      <div className="relative">
+        <input
+          id={inputId}
+          className={INPUT}
+          placeholder={placeholder}
+          value={query}
+          onChange={handleInput}
+          onFocus={() => { if (suggestions.length > 0) setOpen(true) }}
+          onBlur={handleBlur}
+          autoComplete="off"
+        />
+        {/* Linked indicator */}
+        {artistId && (
+          <span
+            className="absolute right-2.5 top-1/2 -translate-y-1/2"
+            title="Artiste lié au répertoire"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5" style={{ color: '#C9A84C' }}>
+              <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
+              <circle cx="12" cy="7" r="4" />
+            </svg>
+          </span>
+        )}
+      </div>
+
+      {/* Dropdown */}
+      {open && suggestions.length > 0 && (
+        <ul className="absolute z-50 mt-1 w-full bg-white border border-gray-100 rounded-lg shadow-lg overflow-hidden">
+          {suggestions.map(artist => (
+            <li key={artist.id}>
+              <button
+                type="button"
+                className="w-full flex items-center gap-2.5 px-3 py-2 text-sm hover:bg-gray-50 transition-colors text-left"
+                onMouseDown={e => { e.preventDefault(); handleSelect(artist) }}
+              >
+                {artist.photoUrl ? (
+                  <img
+                    src={artist.photoUrl}
+                    alt={artist.name}
+                    className="w-7 h-7 rounded-full object-cover shrink-0"
+                  />
+                ) : (
+                  <div
+                    className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 text-xs font-bold"
+                    style={{ backgroundColor: 'rgba(201,168,76,0.15)', color: '#a8893a' }}
+                  >
+                    {initials(artist.name)}
+                  </div>
+                )}
+                <span className="truncate text-gray-800">{artist.name}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  )
+}
 
 function FieldLabel({ children, optional }: { children: React.ReactNode; optional?: boolean }) {
   return (
@@ -484,9 +609,14 @@ export function SpectacleForm() {
                       <input className={INPUT} placeholder="ex : Hamlet"
                         value={c.role}
                         onChange={e => setCast(prev => prev.map(r => r.id === c.id ? { ...r, role: e.target.value } : r))} />
-                      <input className={INPUT} placeholder="ex : Jean Martin"
+                      <ArtistAutocomplete
                         value={c.name}
-                        onChange={e => setCast(prev => prev.map(r => r.id === c.id ? { ...r, name: e.target.value } : r))} />
+                        artistId={c.artistId}
+                        placeholder="ex : Jean Martin"
+                        onChange={(name, artistId) =>
+                          setCast(prev => prev.map(r => r.id === c.id ? { ...r, name, artistId } : r))
+                        }
+                      />
                       <button type="button" className={ICON_BTN}
                         disabled={cast.length === 1}
                         onClick={() => setCast(prev => prev.filter(r => r.id !== c.id))}>
@@ -516,9 +646,14 @@ export function SpectacleForm() {
                       <input className={INPUT} placeholder="ex : Costumes"
                         value={c.role}
                         onChange={e => setCreativeTeam(prev => prev.map(r => r.id === c.id ? { ...r, role: e.target.value } : r))} />
-                      <input className={INPUT} placeholder="ex : Sophie Bernard"
+                      <ArtistAutocomplete
                         value={c.name}
-                        onChange={e => setCreativeTeam(prev => prev.map(r => r.id === c.id ? { ...r, name: e.target.value } : r))} />
+                        artistId={c.artistId}
+                        placeholder="ex : Sophie Bernard"
+                        onChange={(name, artistId) =>
+                          setCreativeTeam(prev => prev.map(r => r.id === c.id ? { ...r, name, artistId } : r))
+                        }
+                      />
                       <button type="button" className={ICON_BTN}
                         onClick={() => setCreativeTeam(prev => prev.filter(r => r.id !== c.id))}>
                         <TrashIcon />

@@ -59,20 +59,41 @@ model PriceCategory {
 
 // Comédiens — rôle joué + nom du comédien
 model CastMember {
-  id      String @id @default(cuid())
-  eventId String
-  role    String // personnage / rôle
-  name    String // nom du comédien
+  id       String  @id @default(cuid())
+  eventId  String
+  role     String  // personnage / rôle
+  name     String  // nom du comédien
+  artistId String?
+  artist   Artist? @relation(fields: [artistId], references: [id], onDelete: SetNull)
 
   event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
 }
 
 // Équipe créative — fonction + nom (costumes, lumières, son…)
 model CreativeTeamMember {
-  id      String @id @default(cuid())
-  eventId String
-  role    String // ex : "Costumes", "Scénographie", "Lumières"
-  name    String // nom de la personne
+  id       String  @id @default(cuid())
+  eventId  String
+  role     String  // ex : "Costumes", "Scénographie", "Lumières"
+  name     String  // nom de la personne
+  artistId String?
+  artist   Artist? @relation(fields: [artistId], references: [id], onDelete: SetNull)
 
   event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+}
+
+// ─── Artistes ──────────────────────────────────────────────────────────────────
+
+model Artist {
+  id        String   @id @default(cuid())
+  name      String
+  bio       String?  @db.Text
+  photoUrl  String?  @db.Text
+  email     String?
+  phone     String?
+  website   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  castRoles     CastMember[]
+  creativeRoles CreativeTeamMember[]
 }

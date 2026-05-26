@@ -5,9 +5,10 @@ import type {
   EventStatus,
   CastMember,
   CreativeTeamMember,
+  Artist,
 } from '@prisma/client'
 
-export type { Event, Session, PriceCategory, EventStatus, CastMember, CreativeTeamMember }
+export type { Event, Session, PriceCategory, EventStatus, CastMember, CreativeTeamMember, Artist }
 
 export type EventWithDetails = Event & {
   sessions:        Session[]
