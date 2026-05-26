@@ -12,7 +12,7 @@ const uid = () => Math.random().toString(36).slice(2, 10)
 
 async function resizeImage(file: File, maxW = 1200): Promise<string> {
   return new Promise((resolve, reject) => {
-    const img    = new Image()
+    const img     = new Image()
     const blobUrl = URL.createObjectURL(file)
     img.onload = () => {
       let w = img.width, h = img.height
@@ -30,10 +30,11 @@ async function resizeImage(file: File, maxW = 1200): Promise<string> {
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-interface SessionRow  { id: string; date: string; time: string }
-interface PriceRow    { id: string; name: string; price: string }
-interface PersonRow   { id: string; role: string; name: string }
+interface SessionRow { id: string; date: string; time: string }
+interface PriceRow   { id: string; name: string; price: string }
+interface PersonRow  { id: string; role: string; name: string }
 type SaveStatus = 'idle' | 'saving' | 'saved'
+type Tab = 'infos' | 'distribution' | 'seances' | 'apercu'
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
@@ -47,31 +48,15 @@ const ICON_BTN = [
   'disabled:opacity-30 disabled:cursor-not-allowed',
 ].join(' ')
 
-// ─── Sous-composants ──────────────────────────────────────────────────────────
+// ─── Genres suggérés ──────────────────────────────────────────────────────────
 
-function Section({ n, title, hint, children }: {
-  n: number; title: string; hint?: string; children: React.ReactNode
-}) {
-  return (
-    <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-      <div className="px-6 py-4 border-b border-gray-50 flex items-center gap-3">
-        <span
-          className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0"
-          style={{ backgroundColor: '#0f0f1a' }}
-        >
-          {n}
-        </span>
-        <div>
-          <h2 className="text-sm font-semibold text-gray-600 uppercase tracking-wide leading-none">
-            {title}
-          </h2>
-          {hint && <p className="text-xs text-gray-400 mt-0.5">{hint}</p>}
-        </div>
-      </div>
-      <div className="p-6">{children}</div>
-    </div>
-  )
-}
+const GENRE_SUGGESTIONS = [
+  'Comédie', 'Drame', 'Comédie dramatique', 'Théâtre contemporain',
+  'Classique', 'Comédie musicale', 'One man show', 'One woman show',
+  'Café-théâtre', 'Jeune public', 'Cirque', 'Performance',
+]
+
+// ─── Sous-composants ──────────────────────────────────────────────────────────
 
 function FieldLabel({ children, optional }: { children: React.ReactNode; optional?: boolean }) {
   return (
@@ -79,6 +64,15 @@ function FieldLabel({ children, optional }: { children: React.ReactNode; optiona
       {children}
       {optional && <span className="ml-1 text-gray-300 font-normal normal-case tracking-normal">— facultatif</span>}
     </label>
+  )
+}
+
+function SectionTitle({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex items-center gap-3 mb-5">
+      <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">{children}</h3>
+      <div className="flex-1 h-px bg-gray-100" />
+    </div>
   )
 }
 
@@ -117,12 +111,13 @@ function AddButton({ onClick, label }: { onClick: () => void; label: string }) {
   )
 }
 
-// ─── Genres suggérés ──────────────────────────────────────────────────────────
+// ─── Onglets ──────────────────────────────────────────────────────────────────
 
-const GENRE_SUGGESTIONS = [
-  'Comédie', 'Drame', 'Comédie dramatique', 'Théâtre contemporain',
-  'Classique', 'Comédie musicale', 'One man show', 'One woman show',
-  'Café-théâtre', 'Jeune public', 'Cirque', 'Performance',
+const TABS: { id: Tab; label: string }[] = [
+  { id: 'infos',         label: 'Informations'     },
+  { id: 'distribution',  label: 'Distribution'     },
+  { id: 'seances',       label: 'Séances & Tarifs' },
+  { id: 'apercu',        label: 'Aperçu'           },
 ]
 
 // ─── Composant principal ──────────────────────────────────────────────────────
@@ -137,6 +132,8 @@ export function SpectacleForm() {
   const [director,    setDirector] = useState('')
   const [duration,    setDuration] = useState('')
   const [genre,       setGenre]    = useState('')
+  const [ageMin,      setAgeMin]   = useState('')
+  const [website,     setWebsite]  = useState('')
 
   // — Visuel
   const [imgPreview, setImgPreview] = useState<string | null>(null)
@@ -170,6 +167,9 @@ export function SpectacleForm() {
   // — Modèle de carte
   const [cardTemplate, setCardTemplate] = useState<CardTemplate>('classique')
 
+  // — Navigation
+  const [tab, setTab] = useState<Tab>('infos')
+
   // — Sauvegarde
   const [saveStatus,   setSaveStatus]  = useState<SaveStatus>('idle')
   const [lastSaved,    setLastSaved]   = useState<string | null>(null)
@@ -178,23 +178,20 @@ export function SpectacleForm() {
 
   const eventIdRef = useRef<string | null>(null)
   const formRef    = useRef({
-    title, description, author, director, duration, genre,
+    title, description, author, director, duration, genre, ageMin, website,
     imgData, cast, creativeTeam, sessions, prices, cardTemplate,
   })
   useEffect(() => {
     formRef.current = {
-      title, description, author, director, duration, genre,
+      title, description, author, director, duration, genre, ageMin, website,
       imgData, cast, creativeTeam, sessions, prices, cardTemplate,
     }
-  }, [title, description, author, director, duration, genre,
+  }, [title, description, author, director, duration, genre, ageMin, website,
       imgData, cast, creativeTeam, sessions, prices, cardTemplate])
 
   // ── Payload ──────────────────────────────────────────────────────────────────
 
-  function buildPayload(
-    f: typeof formRef.current,
-    status: 'DRAFT' | 'PUBLISHED',
-  ) {
+  function buildPayload(f: typeof formRef.current, status: 'DRAFT' | 'PUBLISHED') {
     return {
       title:        f.title.trim(),
       description:  f.description.trim() || null,
@@ -242,13 +239,10 @@ export function SpectacleForm() {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(buildPayload(formData, status)),
           })
-
       if (!res.ok) throw new Error(await res.text())
       const json = await res.json()
       if (!eventIdRef.current) eventIdRef.current = json.data.id
-      setLastSaved(
-        new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
-      )
+      setLastSaved(new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }))
       setSaveStatus('saved')
       return json.data.id
     } catch (e) {
@@ -290,326 +284,365 @@ export function SpectacleForm() {
   // ── Render ───────────────────────────────────────────────────────────────────
 
   return (
-    <div className="space-y-5 pb-12">
+    <div className="flex flex-col gap-0 pb-12">
 
-      {/* ① Informations générales ─────────────────────────────────────────── */}
-      <Section n={1} title="Informations générales">
-        <div className="space-y-4">
-
-          {/* Titre */}
-          <div>
-            <FieldLabel>Titre du spectacle <span style={{ color: '#8B1A1A' }}>*</span></FieldLabel>
-            <input className={INPUT} placeholder="ex : Roméo et Juliette"
-              value={title} onChange={e => setTitle(e.target.value)} />
-          </div>
-
-          {/* Description */}
-          <div>
-            <FieldLabel optional>Synopsis / description</FieldLabel>
-            <textarea className={`${INPUT} resize-none`} rows={4}
-              placeholder="Synopsis, propos du spectacle, note d'intention…"
-              value={description} onChange={e => setDesc(e.target.value)} />
-          </div>
-
-          {/* Auteur + Metteur en scène */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <FieldLabel optional>Auteur</FieldLabel>
-              <input className={INPUT} placeholder="ex : Molière"
-                value={author} onChange={e => setAuthor(e.target.value)} />
-            </div>
-            <div>
-              <FieldLabel optional>Mise en scène</FieldLabel>
-              <input className={INPUT} placeholder="ex : Marie Dupont"
-                value={director} onChange={e => setDirector(e.target.value)} />
-            </div>
-          </div>
-
-          {/* Durée + Genre */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <FieldLabel optional>Durée</FieldLabel>
-              <input className={INPUT} placeholder="ex : 1h15, 2h avec entracte"
-                value={duration} onChange={e => setDuration(e.target.value)} />
-            </div>
-            <div>
-              <FieldLabel optional>Genre</FieldLabel>
-              <input
-                className={INPUT}
-                placeholder="ex : Comédie, Drame…"
-                list="genre-suggestions"
-                value={genre}
-                onChange={e => setGenre(e.target.value)}
-              />
-              <datalist id="genre-suggestions">
-                {GENRE_SUGGESTIONS.map(g => <option key={g} value={g} />)}
-              </datalist>
-            </div>
-          </div>
-
-        </div>
-      </Section>
-
-      {/* ② Affiche ──────────────────────────────────────────────────────────── */}
-      <Section n={2} title="Affiche" hint="JPG, PNG, WebP · Max 5 Mo">
-        {imgPreview ? (
-          <div className="relative inline-block">
-            <img src={imgPreview} alt="Aperçu affiche" className="h-64 w-auto rounded-lg object-cover shadow-md" />
-            <button type="button" onClick={() => { setImgPreview(null); setImgData(null) }}
-              className="absolute top-2 right-2 bg-black/60 text-white rounded-full p-1.5 hover:bg-black/80 transition-colors">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" className="w-3.5 h-3.5">
-                <path d="M18 6L6 18M6 6l12 12" />
-              </svg>
+      {/* ── Tab bar ─────────────────────────────────────────────────────────── */}
+      <div className="bg-white border border-gray-100 rounded-xl shadow-sm mb-5 overflow-hidden">
+        <div className="flex border-b border-gray-100">
+          {TABS.map(t => (
+            <button
+              key={t.id}
+              type="button"
+              onClick={() => setTab(t.id)}
+              className="px-6 py-3.5 text-sm font-medium transition-colors relative"
+              style={{
+                color:           tab === t.id ? '#0f0f1a' : '#9ca3af',
+                backgroundColor: tab === t.id ? 'transparent' : 'transparent',
+              }}
+            >
+              {t.label}
+              {tab === t.id && (
+                <span
+                  className="absolute bottom-0 left-0 right-0 h-0.5"
+                  style={{ backgroundColor: '#C9A84C' }}
+                />
+              )}
             </button>
-          </div>
-        ) : (
-          <label
-            className="flex flex-col items-center justify-center gap-3 h-52 border-2 border-dashed border-gray-200 rounded-xl cursor-pointer hover:border-gray-300 hover:bg-gray-50/50 transition-colors group"
-            onDragOver={e => e.preventDefault()}
-            onDrop={e => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) handleFile(f) }}
-          >
-            <div className="w-12 h-12 rounded-xl flex items-center justify-center group-hover:scale-105 transition-transform"
-              style={{ backgroundColor: 'rgba(201,168,76,0.1)', color: '#C9A84C' }}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
-                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" />
-              </svg>
-            </div>
-            <div className="text-center">
-              <p className="text-sm text-gray-600 font-medium">
-                Déposer une image ou <span style={{ color: '#C9A84C' }}>parcourir</span>
-              </p>
-            </div>
-            <input type="file" accept="image/*" className="sr-only"
-              onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f) }} />
-          </label>
-        )}
-      </Section>
-
-      {/* ③ Distribution ─────────────────────────────────────────────────────── */}
-      <Section n={3} title="Distribution" hint="Comédiens et personnages interprétés">
-        <div className="space-y-2.5">
-          {cast.length > 0 && (
-            <div className="grid grid-cols-[1fr_1fr_auto] gap-2 mb-1">
-              <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide px-1">Personnage / Rôle</span>
-              <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide px-1">Comédien·ne</span>
-              <span />
-            </div>
-          )}
-          {cast.map(c => (
-            <div key={c.id} className="grid grid-cols-[1fr_1fr_auto] items-center gap-2">
-              <input className={INPUT} placeholder="ex : Hamlet"
-                value={c.role}
-                onChange={e => setCast(prev => prev.map(r => r.id === c.id ? { ...r, role: e.target.value } : r))} />
-              <input className={INPUT} placeholder="ex : Jean Martin"
-                value={c.name}
-                onChange={e => setCast(prev => prev.map(r => r.id === c.id ? { ...r, name: e.target.value } : r))} />
-              <button type="button" className={ICON_BTN}
-                disabled={cast.length === 1}
-                onClick={() => setCast(prev => prev.filter(r => r.id !== c.id))}>
-                <TrashIcon />
-              </button>
-            </div>
           ))}
-          <AddButton onClick={() => setCast(prev => [...prev, { id: uid(), role: '', name: '' }])}
-            label="Ajouter un comédien" />
         </div>
-      </Section>
 
-      {/* ④ Équipe créative ──────────────────────────────────────────────────── */}
-      <Section n={4} title="Équipe créative" hint="Metteur en scène, scénographe, costumier…">
-        <div className="space-y-2.5">
-          {creativeTeam.length > 0 && (
-            <div className="grid grid-cols-[1fr_1fr_auto] gap-2 mb-1">
-              <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide px-1">Fonction</span>
-              <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide px-1">Nom</span>
-              <span />
-            </div>
-          )}
-          {creativeTeam.map(c => (
-            <div key={c.id} className="grid grid-cols-[1fr_1fr_auto] items-center gap-2">
-              <input className={INPUT} placeholder="ex : Costumes"
-                value={c.role}
-                onChange={e => setCreativeTeam(prev => prev.map(r => r.id === c.id ? { ...r, role: e.target.value } : r))} />
-              <input className={INPUT} placeholder="ex : Sophie Bernard"
-                value={c.name}
-                onChange={e => setCreativeTeam(prev => prev.map(r => r.id === c.id ? { ...r, name: e.target.value } : r))} />
-              <button type="button" className={ICON_BTN}
-                onClick={() => setCreativeTeam(prev => prev.filter(r => r.id !== c.id))}>
-                <TrashIcon />
-              </button>
-            </div>
-          ))}
-          <AddButton
-            onClick={() => setCreativeTeam(prev => [...prev, { id: uid(), role: '', name: '' }])}
-            label="Ajouter un membre" />
-        </div>
-      </Section>
+        {/* ── Contenu de l'onglet ─────────────────────────────────────────── */}
+        <div className="p-6 space-y-6">
 
-      {/* ⑤ Séances ──────────────────────────────────────────────────────────── */}
-      <Section n={5} title="Séances" hint="Dates et horaires des représentations">
-        <div className="space-y-2.5">
-          {sessions.length > 0 && (
-            <div className="grid grid-cols-[1fr_1fr_auto_auto] gap-2 mb-1">
-              <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide px-1">Date</span>
-              <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide px-1">Heure</span>
-              <span /><span />
-            </div>
-          )}
-          {sessions.map(s => (
-            <div key={s.id} className="grid grid-cols-[1fr_1fr_auto_auto] items-center gap-2">
-              <input type="date" className={INPUT} value={s.date}
-                onChange={e => setSessions(prev => prev.map(r => r.id === s.id ? { ...r, date: e.target.value } : r))} />
-              <input type="time" className={INPUT} value={s.time}
-                onChange={e => setSessions(prev => prev.map(r => r.id === s.id ? { ...r, time: e.target.value } : r))} />
-              <button type="button" title="Dupliquer" className={ICON_BTN}
-                onClick={() => {
-                  const idx = sessions.findIndex(r => r.id === s.id)
-                  setSessions(prev => [...prev.slice(0, idx + 1), { ...s, id: uid() }, ...prev.slice(idx + 1)])
-                }}>
-                <DuplicateIcon />
-              </button>
-              <button type="button" title="Supprimer" className={ICON_BTN}
-                disabled={sessions.length === 1}
-                onClick={() => setSessions(prev => prev.filter(r => r.id !== s.id))}>
-                <TrashIcon />
-              </button>
-            </div>
-          ))}
-          <AddButton onClick={() => setSessions(prev => [...prev, { id: uid(), date: '', time: '' }])}
-            label="Ajouter une séance" />
-        </div>
-      </Section>
-
-      {/* ⑥ Tarifs ───────────────────────────────────────────────────────────── */}
-      <Section n={6} title="Tarifs">
-        <div className="space-y-2.5">
-          {prices.length > 0 && (
-            <div className="grid grid-cols-[1fr_auto_auto] gap-2 mb-1">
-              <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide px-1">Nom du tarif</span>
-              <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide w-32 text-right px-1">Prix (€)</span>
-              <span />
-            </div>
-          )}
-          {prices.map(p => (
-            <div key={p.id} className="grid grid-cols-[1fr_auto_auto] items-center gap-2">
-              <input className={INPUT} placeholder="ex : Plein tarif"
-                value={p.name}
-                onChange={e => setPrices(prev => prev.map(r => r.id === p.id ? { ...r, name: e.target.value } : r))} />
-              <div className="flex items-center gap-1.5">
-                <input type="number" min="0" step="0.5" className={`${INPUT} w-28 text-right`}
-                  placeholder="0,00" value={p.price}
-                  onChange={e => setPrices(prev => prev.map(r => r.id === p.id ? { ...r, price: e.target.value } : r))} />
-                <span className="text-sm font-medium text-gray-400">€</span>
+          {/* ① INFORMATIONS ─────────────────────────────────────────────────── */}
+          {tab === 'infos' && (
+            <>
+              {/* Titre + description */}
+              <div className="space-y-4">
+                <SectionTitle>Présentation</SectionTitle>
+                <div>
+                  <FieldLabel>Titre du spectacle <span style={{ color: '#8B1A1A' }}>*</span></FieldLabel>
+                  <input className={INPUT} placeholder="ex : Roméo et Juliette"
+                    value={title} onChange={e => setTitle(e.target.value)} />
+                </div>
+                <div>
+                  <FieldLabel optional>Synopsis / description</FieldLabel>
+                  <textarea className={`${INPUT} resize-none`} rows={4}
+                    placeholder="Synopsis, propos du spectacle, note d'intention…"
+                    value={description} onChange={e => setDesc(e.target.value)} />
+                </div>
               </div>
-              <button type="button" className={ICON_BTN}
-                onClick={() => setPrices(prev => prev.filter(r => r.id !== p.id))}>
-                <TrashIcon />
-              </button>
-            </div>
-          ))}
-          <AddButton onClick={() => setPrices(prev => [...prev, { id: uid(), name: '', price: '' }])}
-            label="Ajouter un tarif" />
-        </div>
-      </Section>
 
-      {/* ⑦ Aperçu & modèle de carte ─────────────────────────────────────────── */}
-      <Section n={7} title="Aperçu & modèle de carte" hint="Choisissez l'apparence de la carte de votre spectacle">
-        {(() => {
-          // Dériver les données pour la carte depuis le formulaire
-          const validSessions = sessions.filter(s => s.date && s.time)
-          const firstSession  = validSessions.sort((a, b) => a.date.localeCompare(b.date))[0] ?? null
-          const validPrices   = prices.filter(p => p.price && !isNaN(parseFloat(p.price)))
-          const priceFrom     = validPrices.length
-            ? Math.min(...validPrices.map(p => Math.round(parseFloat(p.price) * 100)))
-            : null
+              {/* Fiche artistique */}
+              <div className="space-y-4">
+                <SectionTitle>Fiche artistique</SectionTitle>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <FieldLabel optional>Auteur / Autrice</FieldLabel>
+                    <input className={INPUT} placeholder="ex : Molière"
+                      value={author} onChange={e => setAuthor(e.target.value)} />
+                  </div>
+                  <div>
+                    <FieldLabel optional>Mise en scène</FieldLabel>
+                    <input className={INPUT} placeholder="ex : Marie Dupont"
+                      value={director} onChange={e => setDirector(e.target.value)} />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <FieldLabel optional>Durée</FieldLabel>
+                    <input className={INPUT} placeholder="ex : 1h15, 2h avec entracte"
+                      value={duration} onChange={e => setDuration(e.target.value)} />
+                  </div>
+                  <div>
+                    <FieldLabel optional>Genre</FieldLabel>
+                    <input className={INPUT} placeholder="ex : Comédie, Drame…"
+                      list="genre-suggestions" value={genre}
+                      onChange={e => setGenre(e.target.value)} />
+                    <datalist id="genre-suggestions">
+                      {GENRE_SUGGESTIONS.map(g => <option key={g} value={g} />)}
+                    </datalist>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <FieldLabel optional>Âge conseillé</FieldLabel>
+                    <input className={INPUT} placeholder="ex : Dès 8 ans, Tout public"
+                      value={ageMin} onChange={e => setAgeMin(e.target.value)} />
+                  </div>
+                  <div>
+                    <FieldLabel optional>Site web</FieldLabel>
+                    <input className={INPUT} placeholder="ex : https://monspectacle.fr"
+                      value={website} onChange={e => setWebsite(e.target.value)} />
+                  </div>
+                </div>
+              </div>
 
-          const previewData: CardData = {
-            title:        title || 'Titre du spectacle',
-            author:       author   || null,
-            director:     director || null,
-            duration:     duration || null,
-            genre:        genre    || null,
-            imageUrl:     imgData  || null,
-            firstSession: firstSession ? { date: firstSession.date, time: firstSession.time } : null,
-            priceFrom,
-          }
-
-          return (
-            <div className="space-y-6">
-              {/* Sélecteur de modèles */}
+              {/* Affiche */}
               <div>
-                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">
-                  Modèle
-                </p>
-                <div className="flex flex-wrap gap-4">
-                  {TEMPLATES.map(tpl => {
-                    const selected = cardTemplate === tpl.id
-                    return (
-                      <button
-                        key={tpl.id}
-                        type="button"
-                        onClick={() => setCardTemplate(tpl.id as CardTemplate)}
-                        className="flex flex-col items-center gap-2 group"
-                      >
-                        {/* Miniature scalée à 50 % */}
-                        <div
-                          style={{
-                            width:  CARD_W * 0.5,
-                            height: CARD_H * 0.5,
-                            overflow: 'hidden',
-                            borderRadius: 10,
+                <SectionTitle>Affiche</SectionTitle>
+                <p className="text-xs text-gray-400 mb-3">JPG, PNG, WebP · Max 5 Mo</p>
+                {imgPreview ? (
+                  <div className="relative inline-block">
+                    <img src={imgPreview} alt="Aperçu affiche"
+                      className="h-64 w-auto rounded-lg object-cover shadow-md" />
+                    <button type="button"
+                      onClick={() => { setImgPreview(null); setImgData(null) }}
+                      className="absolute top-2 right-2 bg-black/60 text-white rounded-full p-1.5 hover:bg-black/80 transition-colors">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" className="w-3.5 h-3.5">
+                        <path d="M18 6L6 18M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                ) : (
+                  <label
+                    className="flex flex-col items-center justify-center gap-3 h-48 border-2 border-dashed border-gray-200 rounded-xl cursor-pointer hover:border-gray-300 hover:bg-gray-50/50 transition-colors group"
+                    onDragOver={e => e.preventDefault()}
+                    onDrop={e => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) handleFile(f) }}
+                  >
+                    <div className="w-12 h-12 rounded-xl flex items-center justify-center group-hover:scale-105 transition-transform"
+                      style={{ backgroundColor: 'rgba(201,168,76,0.1)', color: '#C9A84C' }}>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
+                        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+                        <polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" />
+                      </svg>
+                    </div>
+                    <p className="text-sm text-gray-600 font-medium">
+                      Déposer une image ou <span style={{ color: '#C9A84C' }}>parcourir</span>
+                    </p>
+                    <input type="file" accept="image/*" className="sr-only"
+                      onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f) }} />
+                  </label>
+                )}
+              </div>
+            </>
+          )}
+
+          {/* ② DISTRIBUTION ──────────────────────────────────────────────────── */}
+          {tab === 'distribution' && (
+            <>
+              {/* Comédiens */}
+              <div>
+                <SectionTitle>Comédien·nes</SectionTitle>
+                <div className="space-y-2.5">
+                  {cast.length > 0 && (
+                    <div className="grid grid-cols-[1fr_1fr_auto] gap-2 mb-1">
+                      <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide px-1">Personnage / Rôle</span>
+                      <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide px-1">Comédien·ne</span>
+                      <span />
+                    </div>
+                  )}
+                  {cast.map(c => (
+                    <div key={c.id} className="grid grid-cols-[1fr_1fr_auto] items-center gap-2">
+                      <input className={INPUT} placeholder="ex : Hamlet"
+                        value={c.role}
+                        onChange={e => setCast(prev => prev.map(r => r.id === c.id ? { ...r, role: e.target.value } : r))} />
+                      <input className={INPUT} placeholder="ex : Jean Martin"
+                        value={c.name}
+                        onChange={e => setCast(prev => prev.map(r => r.id === c.id ? { ...r, name: e.target.value } : r))} />
+                      <button type="button" className={ICON_BTN}
+                        disabled={cast.length === 1}
+                        onClick={() => setCast(prev => prev.filter(r => r.id !== c.id))}>
+                        <TrashIcon />
+                      </button>
+                    </div>
+                  ))}
+                  <AddButton onClick={() => setCast(prev => [...prev, { id: uid(), role: '', name: '' }])}
+                    label="Ajouter un comédien" />
+                </div>
+              </div>
+
+              {/* Équipe créative */}
+              <div>
+                <SectionTitle>Équipe créative</SectionTitle>
+                <p className="text-xs text-gray-400 mb-3">Metteur en scène, scénographe, costumier, éclairagiste…</p>
+                <div className="space-y-2.5">
+                  {creativeTeam.length > 0 && (
+                    <div className="grid grid-cols-[1fr_1fr_auto] gap-2 mb-1">
+                      <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide px-1">Fonction</span>
+                      <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide px-1">Nom</span>
+                      <span />
+                    </div>
+                  )}
+                  {creativeTeam.map(c => (
+                    <div key={c.id} className="grid grid-cols-[1fr_1fr_auto] items-center gap-2">
+                      <input className={INPUT} placeholder="ex : Costumes"
+                        value={c.role}
+                        onChange={e => setCreativeTeam(prev => prev.map(r => r.id === c.id ? { ...r, role: e.target.value } : r))} />
+                      <input className={INPUT} placeholder="ex : Sophie Bernard"
+                        value={c.name}
+                        onChange={e => setCreativeTeam(prev => prev.map(r => r.id === c.id ? { ...r, name: e.target.value } : r))} />
+                      <button type="button" className={ICON_BTN}
+                        onClick={() => setCreativeTeam(prev => prev.filter(r => r.id !== c.id))}>
+                        <TrashIcon />
+                      </button>
+                    </div>
+                  ))}
+                  <AddButton onClick={() => setCreativeTeam(prev => [...prev, { id: uid(), role: '', name: '' }])}
+                    label="Ajouter un membre" />
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* ③ SÉANCES & TARIFS ──────────────────────────────────────────────── */}
+          {tab === 'seances' && (
+            <>
+              {/* Séances */}
+              <div>
+                <SectionTitle>Séances</SectionTitle>
+                <div className="space-y-2.5">
+                  {sessions.length > 0 && (
+                    <div className="grid grid-cols-[1fr_1fr_auto_auto] gap-2 mb-1">
+                      <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide px-1">Date</span>
+                      <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide px-1">Heure</span>
+                      <span /><span />
+                    </div>
+                  )}
+                  {sessions.map(s => (
+                    <div key={s.id} className="grid grid-cols-[1fr_1fr_auto_auto] items-center gap-2">
+                      <input type="date" className={INPUT} value={s.date}
+                        onChange={e => setSessions(prev => prev.map(r => r.id === s.id ? { ...r, date: e.target.value } : r))} />
+                      <input type="time" className={INPUT} value={s.time}
+                        onChange={e => setSessions(prev => prev.map(r => r.id === s.id ? { ...r, time: e.target.value } : r))} />
+                      <button type="button" title="Dupliquer" className={ICON_BTN}
+                        onClick={() => {
+                          const idx = sessions.findIndex(r => r.id === s.id)
+                          setSessions(prev => [
+                            ...prev.slice(0, idx + 1),
+                            { ...s, id: uid() },
+                            ...prev.slice(idx + 1),
+                          ])
+                        }}>
+                        <DuplicateIcon />
+                      </button>
+                      <button type="button" title="Supprimer" className={ICON_BTN}
+                        disabled={sessions.length === 1}
+                        onClick={() => setSessions(prev => prev.filter(r => r.id !== s.id))}>
+                        <TrashIcon />
+                      </button>
+                    </div>
+                  ))}
+                  <AddButton onClick={() => setSessions(prev => [...prev, { id: uid(), date: '', time: '' }])}
+                    label="Ajouter une séance" />
+                </div>
+              </div>
+
+              {/* Tarifs */}
+              <div>
+                <SectionTitle>Tarifs</SectionTitle>
+                <div className="space-y-2.5">
+                  {prices.length > 0 && (
+                    <div className="grid grid-cols-[1fr_auto_auto] gap-2 mb-1">
+                      <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide px-1">Nom du tarif</span>
+                      <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide w-32 text-right px-1">Prix (€)</span>
+                      <span />
+                    </div>
+                  )}
+                  {prices.map(p => (
+                    <div key={p.id} className="grid grid-cols-[1fr_auto_auto] items-center gap-2">
+                      <input className={INPUT} placeholder="ex : Plein tarif"
+                        value={p.name}
+                        onChange={e => setPrices(prev => prev.map(r => r.id === p.id ? { ...r, name: e.target.value } : r))} />
+                      <div className="flex items-center gap-1.5">
+                        <input type="number" min="0" step="0.5" className={`${INPUT} w-28 text-right`}
+                          placeholder="0,00" value={p.price}
+                          onChange={e => setPrices(prev => prev.map(r => r.id === p.id ? { ...r, price: e.target.value } : r))} />
+                        <span className="text-sm font-medium text-gray-400">€</span>
+                      </div>
+                      <button type="button" className={ICON_BTN}
+                        onClick={() => setPrices(prev => prev.filter(r => r.id !== p.id))}>
+                        <TrashIcon />
+                      </button>
+                    </div>
+                  ))}
+                  <AddButton onClick={() => setPrices(prev => [...prev, { id: uid(), name: '', price: '' }])}
+                    label="Ajouter un tarif" />
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* ④ APERÇU ────────────────────────────────────────────────────────── */}
+          {tab === 'apercu' && (() => {
+            const validSessions = sessions.filter(s => s.date && s.time)
+            const firstSession  = validSessions.sort((a, b) => a.date.localeCompare(b.date))[0] ?? null
+            const validPrices   = prices.filter(p => p.price && !isNaN(parseFloat(p.price)))
+            const priceFrom     = validPrices.length
+              ? Math.min(...validPrices.map(p => Math.round(parseFloat(p.price) * 100)))
+              : null
+
+            const previewData: CardData = {
+              title:        title || 'Titre du spectacle',
+              author:       author   || null,
+              director:     director || null,
+              duration:     duration || null,
+              genre:        genre    || null,
+              imageUrl:     imgData  || null,
+              firstSession: firstSession ? { date: firstSession.date, time: firstSession.time } : null,
+              priceFrom,
+            }
+
+            return (
+              <div className="space-y-6">
+                {/* Sélecteur */}
+                <div>
+                  <SectionTitle>Modèle de carte</SectionTitle>
+                  <div className="flex flex-wrap gap-4">
+                    {TEMPLATES.map(tpl => {
+                      const selected = cardTemplate === tpl.id
+                      return (
+                        <button key={tpl.id} type="button"
+                          onClick={() => setCardTemplate(tpl.id as CardTemplate)}
+                          className="flex flex-col items-center gap-2">
+                          <div style={{
+                            width: CARD_W * 0.5, height: CARD_H * 0.5,
+                            overflow: 'hidden', borderRadius: 10,
                             boxShadow: selected
                               ? '0 0 0 2.5px #C9A84C, 0 4px 18px rgba(201,168,76,0.25)'
                               : '0 0 0 1.5px #e5e7eb',
                             transition: 'box-shadow 0.15s',
-                          }}
-                        >
-                          <div style={{
-                            transform: 'scale(0.5)',
-                            transformOrigin: 'top left',
-                            width:  CARD_W,
-                            height: CARD_H,
-                            pointerEvents: 'none',
                           }}>
-                            <SpectacleCard data={previewData} template={tpl.id as CardTemplate} />
+                            <div style={{
+                              transform: 'scale(0.5)', transformOrigin: 'top left',
+                              width: CARD_W, height: CARD_H, pointerEvents: 'none',
+                            }}>
+                              <SpectacleCard data={previewData} template={tpl.id as CardTemplate} />
+                            </div>
                           </div>
-                        </div>
-                        {/* Label */}
-                        <span
-                          className="text-xs font-semibold"
-                          style={{ color: selected ? '#C9A84C' : '#9ca3af' }}
-                        >
-                          {tpl.label}
-                        </span>
-                      </button>
-                    )
-                  })}
+                          <span className="text-xs font-semibold"
+                            style={{ color: selected ? '#C9A84C' : '#9ca3af' }}>
+                            {tpl.label}
+                          </span>
+                        </button>
+                      )
+                    })}
+                  </div>
                 </div>
-              </div>
 
-              {/* Aperçu pleine taille */}
-              <div>
-                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">
-                  Aperçu
-                </p>
-                <div className="flex items-start">
-                  <SpectacleCard data={previewData} template={cardTemplate} />
+                {/* Aperçu pleine taille */}
+                <div>
+                  <SectionTitle>Aperçu</SectionTitle>
+                  <div className="flex items-start">
+                    <SpectacleCard data={previewData} template={cardTemplate} />
+                  </div>
                 </div>
               </div>
-            </div>
-          )
-        })()}
-      </Section>
+            )
+          })()}
+
+        </div>
+      </div>
 
       {/* Erreur */}
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-lg">
+        <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-lg mb-3">
           {error}
         </div>
       )}
 
-      {/* Actions */}
-      <div className="flex items-center justify-between pt-2">
+      {/* Actions ────────────────────────────────────────────────────────────── */}
+      <div className="flex items-center justify-between pt-1">
         <div className="flex items-center gap-2 text-xs text-gray-400 min-h-[20px]">
           {saveStatus === 'saving' && (
             <><span className="w-3 h-3 rounded-full border-2 border-gray-300 border-t-gray-500 animate-spin" />Sauvegarde…</>
@@ -639,6 +672,7 @@ export function SpectacleForm() {
           </button>
         </div>
       </div>
+
     </div>
   )
 }
