@@ -110,8 +110,21 @@ function EventCard({ event }: { event: EventWithDetails }) {
           </span>
         </div>
 
+        {/* Auteur · Metteur en scène · Durée · Genre */}
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1.5">
+          {event.author   && <span className="text-xs text-gray-500">✍ {event.author}</span>}
+          {event.director && <span className="text-xs text-gray-500">🎬 {event.director}</span>}
+          {event.duration && <span className="text-xs text-gray-400">⏱ {event.duration}</span>}
+          {event.genre    && (
+            <span className="text-xs px-2 py-0.5 rounded-full font-medium"
+              style={{ backgroundColor: 'rgba(201,168,76,0.1)', color: '#a8893a' }}>
+              {event.genre}
+            </span>
+          )}
+        </div>
+
         {event.description && (
-          <p className="text-sm text-gray-400 mt-1 line-clamp-2">{event.description}</p>
+          <p className="text-sm text-gray-400 mt-1.5 line-clamp-2">{event.description}</p>
         )}
 
         <div className="flex items-center gap-4 mt-3 text-xs text-gray-400">

@@ -3,6 +3,11 @@ export const dynamic = 'force-dynamic'
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
+type SessionInput      = { date: string; time: string }
+type PriceInput        = { name: string; price: number }
+type CastMemberInput   = { role: string; name: string }
+type CreativeTeamInput = { role: string; name: string }
+
 export async function PATCH(
   req: Request,
   { params }: { params: { id: string } },
@@ -16,24 +21,42 @@ export async function PATCH(
         title:       body.title       ?? '',
         description: body.description ?? null,
         imageUrl:    body.imageUrl    ?? null,
+        author:      body.author      ?? null,
+        director:    body.director    ?? null,
+        duration:    body.duration    ?? null,
+        genre:       body.genre       ?? null,
         status:      body.status      ?? 'DRAFT',
-        // Remplace les séances et tarifs existants
         sessions: {
           deleteMany: {},
-          create: (body.sessions ?? []).map((s: { date: string; time: string }) => ({
-            date: s.date,
-            time: s.time,
+          create: (body.sessions ?? []).map((s: SessionInput) => ({
+            date: s.date, time: s.time,
           })),
         },
         priceCategories: {
           deleteMany: {},
-          create: (body.priceCategories ?? []).map((p: { name: string; price: number }) => ({
-            name:  p.name,
-            price: p.price,
+          create: (body.priceCategories ?? []).map((p: PriceInput) => ({
+            name: p.name, price: p.price,
+          })),
+        },
+        castMembers: {
+          deleteMany: {},
+          create: (body.castMembers ?? []).map((c: CastMemberInput) => ({
+            role: c.role, name: c.name,
+          })),
+        },
+        creativeTeam: {
+          deleteMany: {},
+          create: (body.creativeTeam ?? []).map((c: CreativeTeamInput) => ({
+            role: c.role, name: c.name,
           })),
         },
       },
-      include: { sessions: true, priceCategories: true },
+      include: {
+        sessions:        true,
+        priceCategories: true,
+        castMembers:     true,
+        creativeTeam:    true,
+      },
     })
 
     return NextResponse.json({ data: event })

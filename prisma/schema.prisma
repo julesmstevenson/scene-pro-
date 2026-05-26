@@ -15,12 +15,21 @@ model Event {
   title       String      @default("")
   description String?     @db.Text
   imageUrl    String?     @db.Text
-  status      EventStatus @default(DRAFT)
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+
+  // Fiche artistique
+  author    String?   // Auteur de la pièce
+  director  String?   // Metteur en scène
+  duration  String?   // ex : "1h15", "2h30 avec entracte"
+  genre     String?   // ex : "Comédie", "Drame contemporain"
+
+  status    EventStatus @default(DRAFT)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
 
   sessions        Session[]
   priceCategories PriceCategory[]
+  castMembers     CastMember[]
+  creativeTeam    CreativeTeamMember[]
 }
 
 enum EventStatus {
@@ -42,6 +51,26 @@ model PriceCategory {
   eventId String
   name    String
   price   Int    // centimes
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+}
+
+// Comédiens — rôle joué + nom du comédien
+model CastMember {
+  id      String @id @default(cuid())
+  eventId String
+  role    String // personnage / rôle
+  name    String // nom du comédien
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+}
+
+// Équipe créative — fonction + nom (costumes, lumières, son…)
+model CreativeTeamMember {
+  id      String @id @default(cuid())
+  eventId String
+  role    String // ex : "Costumes", "Scénographie", "Lumières"
+  name    String // nom de la personne
 
   event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
 }
