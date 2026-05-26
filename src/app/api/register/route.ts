@@ -32,6 +32,7 @@ export async function POST(req: Request) {
     if (err instanceof z.ZodError) {
       return NextResponse.json({ error: err.errors[0].message }, { status: 400 })
     }
+    console.error('[POST /api/register]', err)
     return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 })
   }
 }
