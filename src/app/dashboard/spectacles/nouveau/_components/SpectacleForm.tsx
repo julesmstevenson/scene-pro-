@@ -158,6 +158,12 @@ export function SpectacleForm() {
     { id: uid(), date: '', time: '' },
   ])
 
+  // — Import IA séances
+  const [parseText,    setParseText]    = useState('')
+  const [isParsing,    setIsParsing]    = useState(false)
+  const [parsedDraft,  setParsedDraft]  = useState<{ date: string; time: string }[] | null>(null)
+  const [parseError,   setParseError]   = useState<string | null>(null)
+
   // — Tarifs
   const [prices, setPrices] = useState<PriceRow[]>([
     { id: uid(), name: 'Plein tarif', price: '25' },
@@ -267,6 +273,47 @@ export function SpectacleForm() {
     setImgPreview(URL.createObjectURL(file))
     try { setImgData(await resizeImage(file)) }
     catch { setError("Impossible de lire l'image") }
+  }
+
+  // ── Import IA séances ────────────────────────────────────────────────────────
+
+  async function handleParse() {
+    if (!parseText.trim()) return
+    setIsParsing(true)
+    setParseError(null)
+    setParsedDraft(null)
+    try {
+      const res = await fetch('/api/sessions/parse', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: parseText }),
+      })
+      if (!res.ok) throw new Error('Erreur serveur')
+      const data = await res.json()
+      if (!data.sessions?.length) setParseError('Aucune séance détectée — reformule ou vérifie le texte.')
+      else setParsedDraft(data.sessions)
+    } catch {
+      setParseError("Impossible d'analyser le texte. Vérifie ta connexion ou réessaie.")
+    } finally {
+      setIsParsing(false)
+    }
+  }
+
+  function applyParsed() {
+    if (!parsedDraft) return
+    const news = parsedDraft.map(s => ({ id: uid(), date: s.date, time: s.time }))
+    setSessions(prev => {
+      const filled = prev.filter(s => s.date && s.time)
+      return [...filled, ...news]
+    })
+    setParsedDraft(null)
+    setParseText('')
+  }
+
+  function fmtParsed(date: string) {
+    return new Date(date + 'T00:00').toLocaleDateString('fr-FR', {
+      weekday: 'short', day: 'numeric', month: 'short',
+    })
   }
 
   // ── Publication ──────────────────────────────────────────────────────────────
@@ -488,6 +535,95 @@ export function SpectacleForm() {
           {/* ③ SÉANCES & TARIFS ──────────────────────────────────────────────── */}
           {tab === 'seances' && (
             <>
+              {/* Import IA */}
+              <div>
+                <SectionTitle>Import intelligent</SectionTitle>
+                <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50/50 p-4 space-y-3">
+                  <p className="text-xs text-gray-400">
+                    Colle le planning depuis ton dossier de presse, ou décris-le en langage naturel.
+                  </p>
+                  <textarea
+                    className={`${INPUT} resize-none bg-white`}
+                    rows={3}
+                    placeholder={'ex : "tous les lundis à 19h et vendredis à 20h30 du 3 mars au 30 mai"\nou : "Mardi 4 mars 20h30, Mercredi 5 mars 15h, Samedi 8 mars 20h30"'}
+                    value={parseText}
+                    onChange={e => { setParseText(e.target.value); setParsedDraft(null); setParseError(null) }}
+                  />
+
+                  {/* Bouton Analyser */}
+                  {!parsedDraft && (
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        disabled={!parseText.trim() || isParsing}
+                        onClick={handleParse}
+                        className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                        style={{ background: 'linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 100%)' }}
+                      >
+                        {isParsing ? (
+                          <>
+                            <span className="w-3.5 h-3.5 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                            Analyse en cours…
+                          </>
+                        ) : (
+                          <>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+                              <path d="M12 2a10 10 0 1 0 10 10" /><path d="M22 2 12 12" /><path d="m17 2 5 5-5 5" />
+                            </svg>
+                            Analyser avec l'IA
+                          </>
+                        )}
+                      </button>
+                      {parseError && <p className="text-xs text-red-500">{parseError}</p>}
+                    </div>
+                  )}
+
+                  {/* Résultat de l'analyse */}
+                  {parsedDraft && (
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        <span className="w-4 h-4 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: 'rgba(21,128,61,0.12)', color: '#15803d' }}>
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" className="w-2.5 h-2.5">
+                            <polyline points="20 6 9 17 4 12" />
+                          </svg>
+                        </span>
+                        <span className="text-xs font-semibold" style={{ color: '#15803d' }}>
+                          {parsedDraft.length} séance{parsedDraft.length > 1 ? 's' : ''} détectée{parsedDraft.length > 1 ? 's' : ''}
+                        </span>
+                      </div>
+
+                      {/* Liste preview — max 8 affichées */}
+                      <div className="grid grid-cols-2 gap-1.5 max-h-44 overflow-y-auto">
+                        {parsedDraft.slice(0, 20).map((s, i) => (
+                          <div key={i} className="flex items-center gap-2 bg-white rounded-lg px-3 py-1.5 border border-gray-100 text-xs text-gray-600">
+                            <span className="font-medium">{fmtParsed(s.date)}</span>
+                            <span className="text-gray-300">·</span>
+                            <span>{s.time}</span>
+                          </div>
+                        ))}
+                        {parsedDraft.length > 20 && (
+                          <div className="col-span-2 text-xs text-gray-400 px-1">
+                            + {parsedDraft.length - 20} séances supplémentaires
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <button type="button" onClick={applyParsed}
+                          className="px-4 py-2 rounded-lg text-sm font-semibold text-white"
+                          style={{ backgroundColor: '#15803d' }}>
+                          Ajouter ces {parsedDraft.length} séances
+                        </button>
+                        <button type="button" onClick={() => { setParsedDraft(null); setParseText('') }}
+                          className="px-3 py-2 rounded-lg text-sm text-gray-500 hover:text-gray-700 transition-colors">
+                          Annuler
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
               {/* Séances */}
               <div>
                 <SectionTitle>Séances</SectionTitle>
