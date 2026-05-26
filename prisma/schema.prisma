@@ -22,6 +22,8 @@ model Event {
   duration  String?   // ex : "1h15", "2h30 avec entracte"
   genre     String?   // ex : "Comédie", "Drame contemporain"
 
+  cardTemplate String?     @default("classique") // classique | minimal | affiche | moderne
+
   status    EventStatus @default(DRAFT)
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt

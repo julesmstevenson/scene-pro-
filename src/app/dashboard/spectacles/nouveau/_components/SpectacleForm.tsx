@@ -2,6 +2,9 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import {
+  SpectacleCard, CardTemplate, CardData, TEMPLATES, CARD_W, CARD_H,
+} from './SpectacleCard'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -164,6 +167,9 @@ export function SpectacleForm() {
     { id: uid(), name: 'Réduit',      price: '18' },
   ])
 
+  // — Modèle de carte
+  const [cardTemplate, setCardTemplate] = useState<CardTemplate>('classique')
+
   // — Sauvegarde
   const [saveStatus,   setSaveStatus]  = useState<SaveStatus>('idle')
   const [lastSaved,    setLastSaved]   = useState<string | null>(null)
@@ -173,15 +179,15 @@ export function SpectacleForm() {
   const eventIdRef = useRef<string | null>(null)
   const formRef    = useRef({
     title, description, author, director, duration, genre,
-    imgData, cast, creativeTeam, sessions, prices,
+    imgData, cast, creativeTeam, sessions, prices, cardTemplate,
   })
   useEffect(() => {
     formRef.current = {
       title, description, author, director, duration, genre,
-      imgData, cast, creativeTeam, sessions, prices,
+      imgData, cast, creativeTeam, sessions, prices, cardTemplate,
     }
   }, [title, description, author, director, duration, genre,
-      imgData, cast, creativeTeam, sessions, prices])
+      imgData, cast, creativeTeam, sessions, prices, cardTemplate])
 
   // ── Payload ──────────────────────────────────────────────────────────────────
 
@@ -190,13 +196,14 @@ export function SpectacleForm() {
     status: 'DRAFT' | 'PUBLISHED',
   ) {
     return {
-      title:       f.title.trim(),
-      description: f.description.trim() || null,
-      imageUrl:    f.imgData,
-      author:      f.author.trim()   || null,
-      director:    f.director.trim() || null,
-      duration:    f.duration.trim() || null,
-      genre:       f.genre.trim()    || null,
+      title:        f.title.trim(),
+      description:  f.description.trim() || null,
+      imageUrl:     f.imgData,
+      author:       f.author.trim()   || null,
+      director:     f.director.trim() || null,
+      duration:     f.duration.trim() || null,
+      genre:        f.genre.trim()    || null,
+      cardTemplate: f.cardTemplate,
       status,
       sessions: f.sessions
         .filter(s => s.date && s.time)
@@ -503,6 +510,95 @@ export function SpectacleForm() {
           <AddButton onClick={() => setPrices(prev => [...prev, { id: uid(), name: '', price: '' }])}
             label="Ajouter un tarif" />
         </div>
+      </Section>
+
+      {/* ⑦ Aperçu & modèle de carte ─────────────────────────────────────────── */}
+      <Section n={7} title="Aperçu & modèle de carte" hint="Choisissez l'apparence de la carte de votre spectacle">
+        {(() => {
+          // Dériver les données pour la carte depuis le formulaire
+          const validSessions = sessions.filter(s => s.date && s.time)
+          const firstSession  = validSessions.sort((a, b) => a.date.localeCompare(b.date))[0] ?? null
+          const validPrices   = prices.filter(p => p.price && !isNaN(parseFloat(p.price)))
+          const priceFrom     = validPrices.length
+            ? Math.min(...validPrices.map(p => Math.round(parseFloat(p.price) * 100)))
+            : null
+
+          const previewData: CardData = {
+            title:        title || 'Titre du spectacle',
+            author:       author   || null,
+            director:     director || null,
+            duration:     duration || null,
+            genre:        genre    || null,
+            imageUrl:     imgData  || null,
+            firstSession: firstSession ? { date: firstSession.date, time: firstSession.time } : null,
+            priceFrom,
+          }
+
+          return (
+            <div className="space-y-6">
+              {/* Sélecteur de modèles */}
+              <div>
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">
+                  Modèle
+                </p>
+                <div className="flex flex-wrap gap-4">
+                  {TEMPLATES.map(tpl => {
+                    const selected = cardTemplate === tpl.id
+                    return (
+                      <button
+                        key={tpl.id}
+                        type="button"
+                        onClick={() => setCardTemplate(tpl.id as CardTemplate)}
+                        className="flex flex-col items-center gap-2 group"
+                      >
+                        {/* Miniature scalée à 50 % */}
+                        <div
+                          style={{
+                            width:  CARD_W * 0.5,
+                            height: CARD_H * 0.5,
+                            overflow: 'hidden',
+                            borderRadius: 10,
+                            boxShadow: selected
+                              ? '0 0 0 2.5px #C9A84C, 0 4px 18px rgba(201,168,76,0.25)'
+                              : '0 0 0 1.5px #e5e7eb',
+                            transition: 'box-shadow 0.15s',
+                          }}
+                        >
+                          <div style={{
+                            transform: 'scale(0.5)',
+                            transformOrigin: 'top left',
+                            width:  CARD_W,
+                            height: CARD_H,
+                            pointerEvents: 'none',
+                          }}>
+                            <SpectacleCard data={previewData} template={tpl.id as CardTemplate} />
+                          </div>
+                        </div>
+                        {/* Label */}
+                        <span
+                          className="text-xs font-semibold"
+                          style={{ color: selected ? '#C9A84C' : '#9ca3af' }}
+                        >
+                          {tpl.label}
+                        </span>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* Aperçu pleine taille */}
+              <div>
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">
+                  Aperçu
+                </p>
+                <div className="flex items-start">
+                  <SpectacleCard data={previewData} template={cardTemplate} />
+                </div>
+              </div>
+            </div>
+          )
+        })()}
       </Section>
 
       {/* Erreur */}

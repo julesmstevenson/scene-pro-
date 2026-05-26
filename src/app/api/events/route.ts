@@ -35,11 +35,12 @@ export async function POST(req: Request) {
         title:       body.title       ?? '',
         description: body.description ?? null,
         imageUrl:    body.imageUrl    ?? null,
-        author:      body.author      ?? null,
-        director:    body.director    ?? null,
-        duration:    body.duration    ?? null,
-        genre:       body.genre       ?? null,
-        status:      body.status      ?? 'DRAFT',
+        author:       body.author       ?? null,
+        director:     body.director     ?? null,
+        duration:     body.duration     ?? null,
+        genre:        body.genre        ?? null,
+        cardTemplate: body.cardTemplate ?? 'classique',
+        status:       body.status       ?? 'DRAFT',
         sessions: {
           create: (body.sessions ?? []).map((s: SessionInput) => ({
             date: s.date, time: s.time,
