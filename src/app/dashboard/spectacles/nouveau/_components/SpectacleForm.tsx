@@ -495,9 +495,10 @@ export function SpectacleForm() {
             disabled={isPublishing || !title.trim()}
             className="px-5 py-2.5 rounded-lg text-sm font-semibold text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             style={{
-              background:  'linear-gradient(135deg, #8B1A1A 0%, #a61a1a 100%)',
-              boxShadow:   'none',
-              ...((!isPublishing && title.trim()) && { boxShadow: '0 4px 14px rgba(139,26,26,0.35)' }),
+              background: 'linear-gradient(135deg, #8B1A1A 0%, #a61a1a 100%)',
+              boxShadow: (!isPublishing && !!title.trim())
+                ? '0 4px 14px rgba(139,26,26,0.35)'
+                : undefined,
             }}
           >
             {isPublishing
