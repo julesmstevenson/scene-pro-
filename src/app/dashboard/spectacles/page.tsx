@@ -31,24 +31,27 @@ export default async function SpectaclesPage() {
   const events = await getEvents()
 
   return (
-    <div className="p-8">
+    <div className="px-10 py-10 max-w-5xl">
+
       {/* En-tête */}
-      <div className="mb-8 flex items-center justify-between">
+      <div className="flex items-end justify-between mb-10">
         <div>
-          <h1 className="font-serif text-2xl font-bold text-gray-900">Spectacles</h1>
-          <p className="text-sm text-gray-400 mt-1">
-            {events.length > 0
-              ? `${events.length} spectacle${events.length > 1 ? 's' : ''}`
-              : 'Gérez vos représentations et événements'}
+          <p className="text-[10px] font-semibold tracking-[0.25em] uppercase text-gray-300 mb-2">
+            Dashboard
           </p>
+          <h1 className="font-serif text-4xl font-bold text-gray-900 leading-none">
+            Spectacles
+          </h1>
+          {events.length > 0 && (
+            <p className="text-sm text-gray-400 mt-2">
+              {events.length} spectacle{events.length > 1 ? 's' : ''}
+            </p>
+          )}
         </div>
         <Link
           href="/dashboard/spectacles/nouveau"
-          className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold text-white transition-all"
-          style={{
-            background: 'linear-gradient(135deg, #8B1A1A 0%, #a61a1a 100%)',
-            boxShadow: '0 4px 14px rgba(139,26,26,0.3)',
-          }}
+          className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold text-white transition-opacity hover:opacity-90"
+          style={{ backgroundColor: '#8B1A1A' }}
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" className="w-4 h-4">
             <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
@@ -61,9 +64,9 @@ export default async function SpectaclesPage() {
       {events.length === 0 ? (
         <EmptyState />
       ) : (
-        <div className="grid gap-4">
+        <div className="divide-y divide-gray-100">
           {events.map(event => (
-            <EventCard key={event.id} event={event} />
+            <EventRow key={event.id} event={event} />
           ))}
         </div>
       )}
@@ -71,116 +74,121 @@ export default async function SpectaclesPage() {
   )
 }
 
-function EventCard({ event }: { event: EventWithDetails }) {
+function EventRow({ event }: { event: EventWithDetails }) {
   const isPublished = event.status === 'PUBLISHED'
-  const firstSession = event.sessions.sort((a, b) => a.date.localeCompare(b.date))[0]
+  const firstSession = [...event.sessions].sort((a, b) => a.date.localeCompare(b.date))[0]
   const range = priceRange(event.priceCategories)
 
   return (
-    <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 flex gap-5 hover:shadow-md transition-shadow">
-      {/* Affiche */}
+    <div className="group flex items-center gap-6 py-5 hover:bg-gray-50/60 -mx-4 px-4 rounded-xl transition-colors">
+
+      {/* Affiche miniature */}
       <div
-        className="w-20 h-24 rounded-lg shrink-0 flex items-center justify-center overflow-hidden"
-        style={{ backgroundColor: 'rgba(15,15,26,0.06)' }}
+        className="w-14 h-[68px] rounded-md shrink-0 overflow-hidden flex items-center justify-center"
+        style={{ backgroundColor: '#f4f3f0' }}
       >
         {event.imageUrl ? (
           <img src={event.imageUrl} alt={event.title} className="w-full h-full object-cover" />
         ) : (
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" className="w-7 h-7 text-gray-300">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 text-gray-300">
             <path d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
           </svg>
         )}
       </div>
 
-      {/* Infos */}
+      {/* Contenu */}
       <div className="flex-1 min-w-0">
-        <div className="flex items-start justify-between gap-3">
-          <h2 className="font-serif font-semibold text-gray-900 text-base leading-snug truncate">
-            {event.title || <span className="text-gray-400 italic">Sans titre</span>}
+
+        {/* Titre + statut */}
+        <div className="flex items-center gap-3">
+          <h2 className="font-serif text-[17px] font-semibold text-gray-900 leading-snug">
+            {event.title || <span className="text-gray-300 italic font-normal">Sans titre</span>}
           </h2>
           <span
-            className="shrink-0 text-xs font-semibold px-2 py-0.5 rounded-full"
+            className="text-[10px] font-semibold tracking-wide uppercase px-2 py-0.5 rounded-full shrink-0"
             style={
               isPublished
-                ? { backgroundColor: 'rgba(21,128,61,0.1)', color: '#15803d' }
-                : { backgroundColor: 'rgba(107,114,128,0.1)', color: '#6b7280' }
+                ? { backgroundColor: 'rgba(139,26,26,0.08)', color: '#8B1A1A' }
+                : { backgroundColor: '#f4f3f0', color: '#9ca3af' }
             }
           >
             {isPublished ? 'Publié' : 'Brouillon'}
           </span>
         </div>
 
-        {/* Auteur · Metteur en scène · Durée · Genre */}
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1.5">
-          {event.author   && <span className="text-xs text-gray-500">✍ {event.author}</span>}
-          {event.director && <span className="text-xs text-gray-500">🎬 {event.director}</span>}
-          {event.duration && <span className="text-xs text-gray-400">⏱ {event.duration}</span>}
-          {event.genre    && (
-            <span className="text-xs px-2 py-0.5 rounded-full font-medium"
-              style={{ backgroundColor: 'rgba(201,168,76,0.1)', color: '#a8893a' }}>
-              {event.genre}
-            </span>
+        {/* Méta */}
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1">
+          {event.author && (
+            <span className="text-xs text-gray-500">{event.author}</span>
+          )}
+          {event.author && event.genre && (
+            <span className="text-gray-200 text-xs">·</span>
+          )}
+          {event.genre && (
+            <span className="text-xs text-gray-400">{event.genre}</span>
+          )}
+          {event.duration && (
+            <>
+              <span className="text-gray-200 text-xs">·</span>
+              <span className="text-xs text-gray-400">{event.duration}</span>
+            </>
           )}
         </div>
 
-        {event.description && (
-          <p className="text-sm text-gray-400 mt-1.5 line-clamp-2">{event.description}</p>
-        )}
-
-        <div className="flex items-center gap-4 mt-3 text-xs text-gray-400">
+        {/* Séances + tarifs */}
+        <div className="flex items-center gap-3 mt-1.5 text-xs text-gray-400">
           {firstSession ? (
-            <span className="flex items-center gap-1">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5">
-                <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
-              </svg>
-              {event.sessions.length} séance{event.sessions.length > 1 ? 's' : ''} · à partir du {formatDate(firstSession.date)}
+            <span>
+              {event.sessions.length} séance{event.sessions.length > 1 ? 's' : ''}
+              {' · '}à partir du {formatDate(firstSession.date)}
             </span>
           ) : (
             <span className="text-gray-300">Aucune séance</span>
           )}
           {range && (
-            <span className="flex items-center gap-1">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5">
-                <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/>
-              </svg>
-              {range}
-            </span>
+            <>
+              <span className="text-gray-200">·</span>
+              <span>{range}</span>
+            </>
           )}
         </div>
       </div>
 
-      {/* Actions */}
-      <div className="flex items-center shrink-0">
-        <Link
-          href={`/dashboard/spectacles/${event.id}/modifier`}
-          className="px-3 py-1.5 rounded-lg text-xs font-medium border border-gray-200 text-gray-600 hover:border-gray-300 hover:text-gray-800 transition-colors"
-        >
-          Modifier
-        </Link>
-      </div>
+      {/* Action */}
+      <Link
+        href={`/dashboard/spectacles/${event.id}/modifier`}
+        className="shrink-0 flex items-center gap-1.5 text-sm font-medium text-gray-300 group-hover:text-gray-600 transition-colors"
+      >
+        Modifier
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5">
+          <path d="M5 12h14M12 5l7 7-7 7" />
+        </svg>
+      </Link>
     </div>
   )
 }
 
 function EmptyState() {
   return (
-    <div className="flex flex-col items-center justify-center py-24 text-center">
+    <div className="flex flex-col items-center justify-center py-32 text-center">
       <div
-        className="w-20 h-20 rounded-2xl flex items-center justify-center mb-5"
-        style={{ backgroundColor: 'rgba(139,26,26,0.08)', color: '#8B1A1A' }}
+        className="w-16 h-16 rounded-2xl flex items-center justify-center mb-6"
+        style={{ backgroundColor: 'rgba(139,26,26,0.06)' }}
       >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" className="w-10 h-10">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" className="w-8 h-8" style={{ color: '#8B1A1A' }}>
           <path d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
         </svg>
       </div>
-      <h3 className="font-serif text-lg font-semibold text-gray-800 mb-2">Aucun spectacle pour l'instant</h3>
-      <p className="text-sm text-gray-400 max-w-xs mb-6">
-        Créez votre premier spectacle pour commencer à vendre des billets.
+      <h3 className="font-serif text-xl font-semibold text-gray-800 mb-2">
+        Aucun spectacle pour l'instant
+      </h3>
+      <p className="text-sm text-gray-400 max-w-xs mb-8 leading-relaxed">
+        Créez votre premier spectacle pour commencer à gérer vos représentations.
       </p>
       <Link
         href="/dashboard/spectacles/nouveau"
-        className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold text-white"
-        style={{ background: 'linear-gradient(135deg, #8B1A1A 0%, #a61a1a 100%)' }}
+        className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold text-white transition-opacity hover:opacity-90"
+        style={{ backgroundColor: '#8B1A1A' }}
       >
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" className="w-4 h-4">
           <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />

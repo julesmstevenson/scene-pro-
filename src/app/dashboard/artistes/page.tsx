@@ -22,24 +22,27 @@ export default async function ArtistesPage() {
   const artists = await getArtists()
 
   return (
-    <div className="p-8">
+    <div className="px-10 py-10 max-w-5xl">
+
       {/* En-tête */}
-      <div className="mb-8 flex items-center justify-between">
+      <div className="flex items-end justify-between mb-10">
         <div>
-          <h1 className="font-serif text-2xl font-bold text-gray-900">Artistes</h1>
-          <p className="text-sm text-gray-400 mt-1">
-            {artists.length > 0
-              ? `${artists.length} artiste${artists.length > 1 ? 's' : ''}`
-              : 'Gérez les artistes de vos spectacles'}
+          <p className="text-[10px] font-semibold tracking-[0.25em] uppercase text-gray-300 mb-2">
+            Dashboard
           </p>
+          <h1 className="font-serif text-4xl font-bold text-gray-900 leading-none">
+            Artistes
+          </h1>
+          {artists.length > 0 && (
+            <p className="text-sm text-gray-400 mt-2">
+              {artists.length} artiste{artists.length > 1 ? 's' : ''}
+            </p>
+          )}
         </div>
         <Link
           href="/dashboard/artistes/nouveau"
-          className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold text-white transition-all"
-          style={{
-            background: 'linear-gradient(135deg, #8B1A1A 0%, #a61a1a 100%)',
-            boxShadow: '0 4px 14px rgba(139,26,26,0.3)',
-          }}
+          className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold text-white transition-opacity hover:opacity-90"
+          style={{ backgroundColor: '#8B1A1A' }}
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" className="w-4 h-4">
             <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
@@ -52,7 +55,7 @@ export default async function ArtistesPage() {
       {artists.length === 0 ? (
         <EmptyState />
       ) : (
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-4 gap-5">
           {artists.map(artist => (
             <ArtistCard key={artist.id} artist={artist} />
           ))}
@@ -64,65 +67,64 @@ export default async function ArtistesPage() {
 
 function ArtistCard({ artist }: { artist: Artist }) {
   return (
-    <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 flex flex-col items-center gap-3 hover:shadow-md transition-shadow">
-      {/* Photo ou avatar initiales */}
+    <Link
+      href={`/dashboard/artistes/${artist.id}/modifier`}
+      className="group flex flex-col items-center gap-4 p-5 rounded-xl hover:bg-gray-50 transition-colors"
+    >
+      {/* Photo */}
       {artist.photoUrl ? (
         <img
           src={artist.photoUrl}
           alt={artist.name}
-          className="w-14 h-14 rounded-full object-cover shrink-0"
-          style={{ border: '2px solid rgba(201,168,76,0.25)' }}
+          className="w-20 h-20 rounded-full object-cover shrink-0 ring-2 ring-gray-100 group-hover:ring-gray-200 transition-all"
         />
       ) : (
         <div
-          className="w-14 h-14 rounded-full flex items-center justify-center shrink-0 text-base font-bold"
-          style={{ backgroundColor: 'rgba(201,168,76,0.15)', color: '#a8893a' }}
+          className="w-20 h-20 rounded-full flex items-center justify-center shrink-0 text-lg font-bold transition-colors"
+          style={{ backgroundColor: '#f4f3f0', color: '#c0b8ae' }}
         >
           {initials(artist.name)}
         </div>
       )}
 
-      {/* Nom */}
-      <div className="text-center">
-        <p className="font-serif font-semibold text-gray-900 leading-snug">{artist.name}</p>
+      {/* Infos */}
+      <div className="text-center min-w-0 w-full">
+        <p className="font-serif font-semibold text-gray-900 leading-snug text-[15px] truncate">
+          {artist.name}
+        </p>
         {artist.email && (
-          <p className="text-xs text-gray-400 mt-0.5 truncate max-w-[180px]">{artist.email}</p>
+          <p className="text-xs text-gray-400 mt-0.5 truncate">{artist.email}</p>
+        )}
+        {!artist.email && artist.bio && (
+          <p className="text-xs text-gray-400 mt-0.5 line-clamp-1">{artist.bio}</p>
         )}
       </div>
-
-      {/* Bouton modifier */}
-      <Link
-        href={`/dashboard/artistes/${artist.id}/modifier`}
-        className="mt-1 px-3 py-1.5 rounded-lg text-xs font-medium border border-gray-200 text-gray-600 hover:border-gray-300 hover:text-gray-800 transition-colors"
-      >
-        Modifier
-      </Link>
-    </div>
+    </Link>
   )
 }
 
 function EmptyState() {
   return (
-    <div className="flex flex-col items-center justify-center py-24 text-center">
+    <div className="flex flex-col items-center justify-center py-32 text-center">
       <div
-        className="w-20 h-20 rounded-2xl flex items-center justify-center mb-5"
-        style={{ backgroundColor: 'rgba(139,26,26,0.08)', color: '#8B1A1A' }}
+        className="w-16 h-16 rounded-2xl flex items-center justify-center mb-6"
+        style={{ backgroundColor: 'rgba(139,26,26,0.06)' }}
       >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" className="w-10 h-10">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" className="w-8 h-8" style={{ color: '#8B1A1A' }}>
           <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
           <circle cx="12" cy="7" r="4" />
         </svg>
       </div>
-      <h3 className="font-serif text-lg font-semibold text-gray-800 mb-2">
+      <h3 className="font-serif text-xl font-semibold text-gray-800 mb-2">
         Aucun artiste pour l'instant
       </h3>
-      <p className="text-sm text-gray-400 max-w-xs mb-6">
+      <p className="text-sm text-gray-400 max-w-xs mb-8 leading-relaxed">
         Ajoutez les comédiens et membres de l'équipe créative de vos spectacles.
       </p>
       <Link
         href="/dashboard/artistes/nouveau"
-        className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold text-white"
-        style={{ background: 'linear-gradient(135deg, #8B1A1A 0%, #a61a1a 100%)' }}
+        className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold text-white transition-opacity hover:opacity-90"
+        style={{ backgroundColor: '#8B1A1A' }}
       >
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" className="w-4 h-4">
           <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />

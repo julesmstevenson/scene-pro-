@@ -28,26 +28,26 @@ export default async function ModifierSpectaclePage({
   if (!event) notFound()
 
   return (
-    <div className="p-8 max-w-3xl mx-auto">
+    <div className="px-10 py-10 max-w-3xl">
       {/* Breadcrumb */}
-      <div className="flex items-center gap-2 text-sm text-gray-400 mb-6">
-        <Link href="/dashboard/spectacles" className="hover:text-gray-600 transition-colors">
+      <div className="flex items-center gap-2 text-xs text-gray-300 mb-8">
+        <Link href="/dashboard/spectacles" className="hover:text-gray-500 transition-colors">
           Spectacles
         </Link>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3">
           <polyline points="9 18 15 12 9 6" />
         </svg>
-        <span className="text-gray-600 truncate max-w-xs">
+        <span className="text-gray-400 truncate max-w-xs">
           {event.title || 'Sans titre'}
         </span>
       </div>
 
-      <div className="mb-8 flex items-start justify-between gap-4">
+      <div className="mb-8 flex items-end justify-between gap-4">
         <div>
-          <h1 className="font-serif text-2xl font-bold text-gray-900">
-            {event.title || <span className="text-gray-400 italic">Sans titre</span>}
+          <h1 className="font-serif text-3xl font-bold text-gray-900 leading-none">
+            {event.title || <span className="text-gray-300 italic font-normal">Sans titre</span>}
           </h1>
-          <p className="text-sm text-gray-400 mt-1">
+          <p className="text-sm text-gray-400 mt-2">
             Modifié le{' '}
             {new Date(event.updatedAt).toLocaleDateString('fr-FR', {
               day: 'numeric', month: 'long', year: 'numeric',
@@ -55,11 +55,11 @@ export default async function ModifierSpectaclePage({
           </p>
         </div>
         <span
-          className="shrink-0 text-xs font-semibold px-2.5 py-1 rounded-full mt-1"
+          className="shrink-0 text-[10px] font-semibold tracking-wide uppercase px-2.5 py-1 rounded-full"
           style={
             event.status === 'PUBLISHED'
-              ? { backgroundColor: 'rgba(21,128,61,0.1)', color: '#15803d' }
-              : { backgroundColor: 'rgba(107,114,128,0.1)', color: '#6b7280' }
+              ? { backgroundColor: 'rgba(139,26,26,0.08)', color: '#8B1A1A' }
+              : { backgroundColor: '#f4f3f0', color: '#9ca3af' }
           }
         >
           {event.status === 'PUBLISHED' ? 'Publié' : 'Brouillon'}

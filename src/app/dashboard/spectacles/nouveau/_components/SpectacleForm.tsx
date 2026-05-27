@@ -47,7 +47,7 @@ interface ArtistSuggestion {
 
 const INPUT = [
   'w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm',
-  'focus:outline-none focus:ring-2 focus:ring-gold-500 focus:border-transparent transition-shadow',
+  'focus:outline-none focus:ring-2 focus:ring-bordeaux/20 focus:border-transparent transition-shadow',
 ].join(' ')
 
 const ICON_BTN = [
@@ -142,7 +142,7 @@ function ArtistAutocomplete({
             className="absolute right-2.5 top-1/2 -translate-y-1/2"
             title="Artiste lié au répertoire"
           >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5" style={{ color: '#C9A84C' }}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5" style={{ color: '#8B1A1A' }}>
               <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
               <circle cx="12" cy="7" r="4" />
             </svg>
@@ -169,7 +169,7 @@ function ArtistAutocomplete({
                 ) : (
                   <div
                     className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 text-xs font-bold"
-                    style={{ backgroundColor: 'rgba(201,168,76,0.15)', color: '#a8893a' }}
+                    style={{ backgroundColor: '#f4f3f0', color: '#9ca3af' }}
                   >
                     {initials(artist.name)}
                   </div>
@@ -227,7 +227,7 @@ function AddButton({ onClick, label }: { onClick: () => void; label: string }) {
       type="button"
       onClick={onClick}
       className="flex items-center gap-2 text-sm font-medium mt-3 px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors"
-      style={{ color: '#C9A84C' }}
+      style={{ color: '#8B1A1A' }}
     >
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" className="w-4 h-4">
         <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
@@ -508,7 +508,7 @@ export function SpectacleForm({ initialData }: { initialData?: EventWithDetails 
               {tab === t.id && (
                 <span
                   className="absolute bottom-0 left-0 right-0 h-0.5"
-                  style={{ backgroundColor: '#C9A84C' }}
+                  style={{ backgroundColor: '#8B1A1A' }}
                 />
               )}
             </button>
@@ -605,14 +605,14 @@ export function SpectacleForm({ initialData }: { initialData?: EventWithDetails 
                     onDrop={e => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) handleFile(f) }}
                   >
                     <div className="w-12 h-12 rounded-xl flex items-center justify-center group-hover:scale-105 transition-transform"
-                      style={{ backgroundColor: 'rgba(201,168,76,0.1)', color: '#C9A84C' }}>
+                      style={{ backgroundColor: 'rgba(139,26,26,0.07)', color: '#8B1A1A' }}>
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
                         <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
                         <polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" />
                       </svg>
                     </div>
                     <p className="text-sm text-gray-600 font-medium">
-                      Déposer une image ou <span style={{ color: '#C9A84C' }}>parcourir</span>
+                      Déposer une image ou <span style={{ color: '#8B1A1A' }}>parcourir</span>
                     </p>
                     <input type="file" accept="image/*" className="sr-only"
                       onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f) }} />
@@ -902,7 +902,7 @@ export function SpectacleForm({ initialData }: { initialData?: EventWithDetails 
                             width: CARD_W * 0.5, height: CARD_H * 0.5,
                             overflow: 'hidden', borderRadius: 10,
                             boxShadow: selected
-                              ? '0 0 0 2.5px #C9A84C, 0 4px 18px rgba(201,168,76,0.25)'
+                              ? '0 0 0 2px #8B1A1A, 0 4px 16px rgba(139,26,26,0.15)'
                               : '0 0 0 1.5px #e5e7eb',
                             transition: 'box-shadow 0.15s',
                           }}>
@@ -914,7 +914,7 @@ export function SpectacleForm({ initialData }: { initialData?: EventWithDetails 
                             </div>
                           </div>
                           <span className="text-xs font-semibold"
-                            style={{ color: selected ? '#C9A84C' : '#9ca3af' }}>
+                            style={{ color: selected ? '#8B1A1A' : '#9ca3af' }}>
                             {tpl.label}
                           </span>
                         </button>
@@ -992,9 +992,8 @@ export function SpectacleForm({ initialData }: { initialData?: EventWithDetails 
             <button type="button" disabled={isPublishing || !title.trim()} onClick={handlePublish}
               className="px-5 py-2.5 rounded-lg text-sm font-semibold text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               style={{
-                background: 'linear-gradient(135deg, #8B1A1A 0%, #a61a1a 100%)',
-                boxShadow: (!isPublishing && !!title.trim()) ? '0 4px 14px rgba(139,26,26,0.35)' : undefined,
-              }}>
+                backgroundColor: '#8B1A1A',
+                              }}>
               {isPublishing
                 ? <span className="flex items-center gap-2">
                     <span className="w-3.5 h-3.5 rounded-full border-2 border-white/40 border-t-white animate-spin" />
@@ -1008,9 +1007,8 @@ export function SpectacleForm({ initialData }: { initialData?: EventWithDetails 
             <button type="button" disabled={isPublishing || !title.trim()} onClick={handlePublish}
               className="px-5 py-2.5 rounded-lg text-sm font-semibold text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               style={{
-                background: 'linear-gradient(135deg, #8B1A1A 0%, #a61a1a 100%)',
-                boxShadow: (!isPublishing && !!title.trim()) ? '0 4px 14px rgba(139,26,26,0.35)' : undefined,
-              }}>
+                backgroundColor: '#8B1A1A',
+                              }}>
               {isPublishing
                 ? <span className="flex items-center gap-2">
                     <span className="w-3.5 h-3.5 rounded-full border-2 border-white/40 border-t-white animate-spin" />

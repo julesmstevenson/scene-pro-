@@ -28,7 +28,7 @@ async function resizeImage(file: File, maxW = 1200): Promise<string> {
 
 const INPUT = [
   'w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm',
-  'focus:outline-none focus:ring-2 focus:ring-gold-500 focus:border-transparent transition-shadow',
+  'focus:outline-none focus:ring-2 focus:ring-bordeaux/20 focus:border-transparent transition-shadow',
 ].join(' ')
 
 // ─── Sous-composants ──────────────────────────────────────────────────────────
@@ -190,7 +190,7 @@ export function ArtistForm({ initialData }: ArtistFormProps) {
             >
               <div
                 className="w-10 h-10 rounded-full flex items-center justify-center group-hover:scale-105 transition-transform"
-                style={{ backgroundColor: 'rgba(201,168,76,0.1)', color: '#C9A84C' }}
+                style={{ backgroundColor: 'rgba(139,26,26,0.07)', color: '#8B1A1A' }}
               >
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
                   <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
@@ -331,8 +331,7 @@ export function ArtistForm({ initialData }: ArtistFormProps) {
           disabled={isSaving || !name.trim()}
           className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           style={{
-            background: 'linear-gradient(135deg, #8B1A1A 0%, #a61a1a 100%)',
-            boxShadow: (!isSaving && !!name.trim()) ? '0 4px 14px rgba(139,26,26,0.35)' : undefined,
+            backgroundColor: '#8B1A1A',
           }}
         >
           {isSaving ? (
