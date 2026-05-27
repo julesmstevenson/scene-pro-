@@ -5,8 +5,8 @@ import { prisma } from '@/lib/prisma'
 
 type SessionInput      = { date: string; time: string }
 type PriceInput        = { name: string; price: number }
-type CastMemberInput   = { role: string; name: string }
-type CreativeTeamInput = { role: string; name: string }
+type CastMemberInput   = { role: string; name: string; artistId?: string | null }
+type CreativeTeamInput = { role: string; name: string; artistId?: string | null }
 
 export async function GET(
   _req: Request,
@@ -64,13 +64,13 @@ export async function PATCH(
         castMembers: {
           deleteMany: {},
           create: (body.castMembers ?? []).map((c: CastMemberInput) => ({
-            role: c.role, name: c.name,
+            role: c.role, name: c.name, artistId: c.artistId ?? null,
           })),
         },
         creativeTeam: {
           deleteMany: {},
           create: (body.creativeTeam ?? []).map((c: CreativeTeamInput) => ({
-            role: c.role, name: c.name,
+            role: c.role, name: c.name, artistId: c.artistId ?? null,
           })),
         },
       },

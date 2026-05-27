@@ -66,8 +66,10 @@ export function ArtistForm({ initialData }: ArtistFormProps) {
   const [imgPreview, setImgPreview] = useState<string | null>(initialData?.photoUrl ?? null)
   const [imgData,    setImgData]    = useState<string | null>(initialData?.photoUrl ?? null)
 
-  const [isSaving, setIsSaving] = useState(false)
-  const [error,    setError]    = useState<string | null>(null)
+  const [isSaving,   setIsSaving]   = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [confirmDel, setConfirmDel] = useState(false)
+  const [error,      setError]      = useState<string | null>(null)
 
   const isEditing = !!initialData
 
@@ -82,6 +84,25 @@ export function ArtistForm({ initialData }: ArtistFormProps) {
       setImgData(await resizeImage(file))
     } catch {
       setError("Impossible de lire l'image")
+    }
+  }
+
+  // ── Suppression ──────────────────────────────────────────────────────────────
+
+  async function handleDelete() {
+    if (!initialData) return
+    setIsDeleting(true)
+    try {
+      const res = await fetch(`/api/artists/${initialData.id}`, { method: 'DELETE' })
+      if (!res.ok) {
+        const json = await res.json()
+        throw new Error(json.error ?? 'Erreur serveur')
+      }
+      router.push('/dashboard/artistes')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erreur lors de la suppression')
+      setIsDeleting(false)
+      setConfirmDel(false)
     }
   }
 
@@ -265,13 +286,46 @@ export function ArtistForm({ initialData }: ArtistFormProps) {
 
       {/* Actions */}
       <div className="flex items-center justify-between">
-        <button
-          type="button"
-          onClick={() => router.push('/dashboard/artistes')}
-          className="px-4 py-2.5 rounded-lg text-sm font-medium border border-gray-200 text-gray-600 hover:border-gray-300 hover:text-gray-800 transition-colors"
-        >
-          Annuler
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => router.push('/dashboard/artistes')}
+            className="px-4 py-2.5 rounded-lg text-sm font-medium border border-gray-200 text-gray-600 hover:border-gray-300 hover:text-gray-800 transition-colors"
+          >
+            Annuler
+          </button>
+
+          {/* Supprimer — mode édition uniquement */}
+          {isEditing && !confirmDel && (
+            <button
+              type="button"
+              onClick={() => setConfirmDel(true)}
+              className="px-4 py-2.5 rounded-lg text-sm font-medium text-red-500 hover:bg-red-50 hover:text-red-600 transition-colors"
+            >
+              Supprimer
+            </button>
+          )}
+          {isEditing && confirmDel && (
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-red-600 font-medium">Confirmer ?</span>
+              <button
+                type="button"
+                disabled={isDeleting}
+                onClick={handleDelete}
+                className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-red-600 hover:bg-red-700 transition-colors disabled:opacity-50"
+              >
+                {isDeleting ? 'Suppression…' : 'Oui, supprimer'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setConfirmDel(false)}
+                className="px-3 py-1.5 rounded-lg text-xs text-gray-500 hover:text-gray-700 transition-colors"
+              >
+                Annuler
+              </button>
+            </div>
+          )}
+        </div>
         <button
           type="submit"
           disabled={isSaving || !name.trim()}

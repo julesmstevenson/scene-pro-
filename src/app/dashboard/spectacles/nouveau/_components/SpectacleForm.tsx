@@ -375,10 +375,10 @@ export function SpectacleForm({ initialData }: { initialData?: EventWithDetails 
         })),
       castMembers: f.cast
         .filter(c => c.name.trim())
-        .map(({ role, name }) => ({ role: role.trim(), name: name.trim() })),
+        .map(({ role, name, artistId }) => ({ role: role.trim(), name: name.trim(), artistId: artistId ?? null })),
       creativeTeam: f.creativeTeam
         .filter(c => c.name.trim())
-        .map(({ role, name }) => ({ role: role.trim(), name: name.trim() })),
+        .map(({ role, name, artistId }) => ({ role: role.trim(), name: name.trim(), artistId: artistId ?? null })),
     }
   }
 
