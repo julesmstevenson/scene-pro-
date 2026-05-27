@@ -72,25 +72,30 @@ export function Sidebar() {
   const pathname = usePathname()
 
   return (
-    <aside className="flex flex-col w-56 shrink-0 min-h-screen bg-white border-r border-gray-100">
-
+    <aside
+      className="flex flex-col w-56 shrink-0 min-h-screen"
+      style={{ backgroundColor: '#0a0a14' }}
+    >
       {/* Logo */}
-      <div className="px-6 pt-8 pb-7">
-        <Link href="/dashboard" className="block group">
+      <div className="px-6 pt-8 pb-7" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+        <Link href="/" className="block">
           <p
             className="font-serif text-[22px] font-bold leading-none tracking-tight"
-            style={{ color: '#8B1A1A' }}
+            style={{ color: '#ffffff' }}
           >
             Scène
           </p>
-          <p className="text-[9px] tracking-[0.35em] uppercase text-gray-300 mt-1.5 font-medium">
+          <p
+            className="text-[9px] tracking-[0.4em] uppercase mt-1.5 font-medium"
+            style={{ color: 'rgba(255,255,255,0.2)' }}
+          >
             Pro
           </p>
         </Link>
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 px-3 space-y-px">
+      <nav className="flex-1 px-3 py-4 space-y-px">
         {navItems.map(({ href, label, icon }) => {
           const isActive = pathname === href || pathname.startsWith(href + '/')
           return (
@@ -101,13 +106,13 @@ export function Sidebar() {
               style={
                 isActive
                   ? {
-                      color: '#8B1A1A',
-                      backgroundColor: 'rgba(139,26,26,0.055)',
+                      color: '#ffffff',
+                      backgroundColor: 'rgba(139,26,26,0.35)',
                       fontWeight: 600,
                     }
                   : {
-                      color: '#b0b7c3',
-                      fontWeight: 500,
+                      color: 'rgba(255,255,255,0.38)',
+                      fontWeight: 400,
                     }
               }
             >
@@ -119,8 +124,11 @@ export function Sidebar() {
       </nav>
 
       {/* Footer */}
-      <div className="px-6 py-6">
-        <p className="text-[10px] tracking-[0.2em] uppercase text-gray-200">
+      <div className="px-6 py-5" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+        <p
+          className="text-[10px] tracking-[0.2em] uppercase"
+          style={{ color: 'rgba(255,255,255,0.12)' }}
+        >
           Billetterie pro
         </p>
       </div>
