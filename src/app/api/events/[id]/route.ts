@@ -8,6 +8,28 @@ type PriceInput        = { name: string; price: number }
 type CastMemberInput   = { role: string; name: string }
 type CreativeTeamInput = { role: string; name: string }
 
+export async function GET(
+  _req: Request,
+  { params }: { params: { id: string } },
+) {
+  try {
+    const event = await prisma.event.findUnique({
+      where: { id: params.id },
+      include: {
+        sessions:        true,
+        priceCategories: true,
+        castMembers:     true,
+        creativeTeam:    true,
+      },
+    })
+    if (!event) return NextResponse.json({ error: 'Introuvable' }, { status: 404 })
+    return NextResponse.json({ data: event })
+  } catch (err) {
+    console.error('[GET /api/events/:id]', err)
+    return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 })
+  }
+}
+
 export async function PATCH(
   req: Request,
   { params }: { params: { id: string } },
