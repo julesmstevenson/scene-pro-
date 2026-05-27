@@ -4,17 +4,33 @@ import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
 
 async function getArtistsWithEvents() {
+  // Requête principale — artistes de base
+  const artists = await prisma.artist.findMany({ orderBy: { name: 'asc' } })
+
+  // Pièces associées — query séparée pour ne pas bloquer si elle échoue
+  let castLinks:     { artistId: string | null; event: { id: string; title: string } }[] = []
+  let creativeLinks: { artistId: string | null; event: { id: string; title: string } }[] = []
   try {
-    return await prisma.artist.findMany({
-      orderBy: { name: 'asc' },
-      include: {
-        castRoles:     { include: { event: { select: { id: true, title: true } } } },
-        creativeRoles: { include: { event: { select: { id: true, title: true } } } },
-      },
+    castLinks = await prisma.castMember.findMany({
+      where:  { artistId: { not: null } },
+      select: { artistId: true, event: { select: { id: true, title: true } } },
+    })
+    creativeLinks = await prisma.creativeTeamMember.findMany({
+      where:  { artistId: { not: null } },
+      select: { artistId: true, event: { select: { id: true, title: true } } },
     })
   } catch {
-    return []
+    // pièces non disponibles — on continue sans
   }
+
+  return artists.map(a => {
+    const seen = new Set<string>()
+    const pieces = [
+      ...castLinks.filter(r => r.artistId === a.id).map(r => r.event),
+      ...creativeLinks.filter(r => r.artistId === a.id).map(r => r.event),
+    ].filter(ev => { if (seen.has(ev.id)) return false; seen.add(ev.id); return true })
+    return { ...a, pieces }
+  })
 }
 
 function initials(name: string): string {
@@ -22,21 +38,7 @@ function initials(name: string): string {
 }
 
 export default async function ArtistesPage() {
-  const artists = await getArtistsWithEvents()
-
-  // Dédupliquer les pièces associées par artiste
-  const artistsWithPieces = artists.map(a => {
-    const seen = new Set<string>()
-    const pieces = [
-      ...a.castRoles.map(r => r.event),
-      ...a.creativeRoles.map(r => r.event),
-    ].filter(ev => {
-      if (seen.has(ev.id)) return false
-      seen.add(ev.id)
-      return true
-    })
-    return { ...a, pieces }
-  })
+  const artistsWithPieces = await getArtistsWithEvents()
 
   return (
     <div className="px-10 py-10">
@@ -50,9 +52,9 @@ export default async function ArtistesPage() {
           <h1 className="font-serif text-4xl font-bold text-gray-900 leading-none">
             Artistes
           </h1>
-          {artists.length > 0 && (
+          {artistsWithPieces.length > 0 && (
             <p className="text-sm text-gray-400 mt-2">
-              {artists.length} artiste{artists.length > 1 ? 's' : ''}
+              {artistsWithPieces.length} artiste{artistsWithPieces.length > 1 ? 's' : ''}
             </p>
           )}
         </div>
@@ -68,7 +70,7 @@ export default async function ArtistesPage() {
         </Link>
       </div>
 
-      {artists.length === 0 ? (
+      {artistsWithPieces.length === 0 ? (
         <EmptyState />
       ) : (
         <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
