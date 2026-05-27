@@ -16,11 +16,12 @@ export async function PATCH(
       where: { id: params.id },
       data: {
         ...(body.name     !== undefined && { name:     body.name.trim() }),
-        ...(body.bio      !== undefined && { bio:      body.bio?.trim()     || null }),
-        ...(body.photoUrl !== undefined && { photoUrl: body.photoUrl        || null }),
-        ...(body.email    !== undefined && { email:    body.email?.trim()   || null }),
-        ...(body.phone    !== undefined && { phone:    body.phone?.trim()   || null }),
-        ...(body.website  !== undefined && { website:  body.website?.trim() || null }),
+        ...(body.category !== undefined && { category: body.category?.trim() || null }),
+        ...(body.bio      !== undefined && { bio:      body.bio?.trim()      || null }),
+        ...(body.photoUrl !== undefined && { photoUrl: body.photoUrl         || null }),
+        ...(body.email    !== undefined && { email:    body.email?.trim()    || null }),
+        ...(body.phone    !== undefined && { phone:    body.phone?.trim()    || null }),
+        ...(body.website  !== undefined && { website:  body.website?.trim()  || null }),
       },
     })
     return NextResponse.json({ data: artist })

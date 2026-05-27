@@ -57,11 +57,12 @@ interface ArtistFormProps {
 export function ArtistForm({ initialData }: ArtistFormProps) {
   const router = useRouter()
 
-  const [name,     setName]    = useState(initialData?.name     ?? '')
-  const [bio,      setBio]     = useState(initialData?.bio      ?? '')
-  const [email,    setEmail]   = useState(initialData?.email    ?? '')
-  const [phone,    setPhone]   = useState(initialData?.phone    ?? '')
-  const [website,  setWebsite] = useState(initialData?.website  ?? '')
+  const [name,     setName]     = useState(initialData?.name     ?? '')
+  const [category, setCategory] = useState(initialData?.category ?? '')
+  const [bio,      setBio]      = useState(initialData?.bio      ?? '')
+  const [email,    setEmail]    = useState(initialData?.email    ?? '')
+  const [phone,    setPhone]    = useState(initialData?.phone    ?? '')
+  const [website,  setWebsite]  = useState(initialData?.website  ?? '')
 
   const [imgPreview, setImgPreview] = useState<string | null>(initialData?.photoUrl ?? null)
   const [imgData,    setImgData]    = useState<string | null>(initialData?.photoUrl ?? null)
@@ -117,6 +118,7 @@ export function ArtistForm({ initialData }: ArtistFormProps) {
     try {
       const payload = {
         name:     name.trim(),
+        category: category.trim() || null,
         bio:      bio.trim()      || null,
         photoUrl: imgData         || null,
         email:    email.trim()    || null,
@@ -214,18 +216,45 @@ export function ArtistForm({ initialData }: ArtistFormProps) {
           )}
         </div>
 
-        {/* Nom */}
-        <div>
-          <FieldLabel>
-            Nom <span style={{ color: '#8B1A1A' }}>*</span>
-          </FieldLabel>
-          <input
-            className={INPUT}
-            placeholder="ex : Marie Dupont"
-            value={name}
-            onChange={e => setName(e.target.value)}
-            required
-          />
+        {/* Nom + Catégorie */}
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <FieldLabel>
+              Nom <span style={{ color: '#8B1A1A' }}>*</span>
+            </FieldLabel>
+            <input
+              className={INPUT}
+              placeholder="ex : Marie Dupont"
+              value={name}
+              onChange={e => setName(e.target.value)}
+              required
+            />
+          </div>
+          <div>
+            <FieldLabel optional>Catégorie</FieldLabel>
+            <input
+              className={INPUT}
+              placeholder="ex : Comédien·ne"
+              list="category-suggestions"
+              value={category}
+              onChange={e => setCategory(e.target.value)}
+            />
+            <datalist id="category-suggestions">
+              {[
+                'Comédien·ne',
+                'Metteur·se en scène',
+                'Scénographe',
+                'Costumier·ère',
+                'Éclairagiste',
+                'Sonoriste',
+                'Chorégraphe',
+                'Producteur·rice',
+                'Directeur·rice artistique',
+                'Musicien·ne',
+                'Régisseur·se',
+              ].map(c => <option key={c} value={c} />)}
+            </datalist>
+          </div>
         </div>
 
         {/* Biographie */}

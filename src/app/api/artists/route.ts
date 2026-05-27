@@ -27,6 +27,7 @@ export async function POST(req: Request) {
     const artist = await prisma.artist.create({
       data: {
         name:     body.name.trim(),
+        category: body.category?.trim() || null,
         bio:      body.bio?.trim()      || null,
         photoUrl: body.photoUrl         || null,
         email:    body.email?.trim()    || null,

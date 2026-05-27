@@ -1,34 +1,49 @@
 import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
-import type { Artist } from '@/types'
 
-async function getArtists(): Promise<Artist[]> {
+async function getArtistsWithEvents() {
   try {
-    return await prisma.artist.findMany({ orderBy: { name: 'asc' } })
+    return await prisma.artist.findMany({
+      orderBy: { name: 'asc' },
+      include: {
+        castRoles:     { include: { event: { select: { id: true, title: true } } } },
+        creativeRoles: { include: { event: { select: { id: true, title: true } } } },
+      },
+    })
   } catch {
     return []
   }
 }
 
 function initials(name: string): string {
-  return name
-    .split(' ')
-    .slice(0, 2)
-    .map(part => part[0]?.toUpperCase() ?? '')
-    .join('')
+  return name.split(' ').slice(0, 2).map(p => p[0]?.toUpperCase() ?? '').join('')
 }
 
 export default async function ArtistesPage() {
-  const artists = await getArtists()
+  const artists = await getArtistsWithEvents()
+
+  // Dédupliquer les pièces associées par artiste
+  const artistsWithPieces = artists.map(a => {
+    const seen = new Set<string>()
+    const pieces = [
+      ...a.castRoles.map(r => r.event),
+      ...a.creativeRoles.map(r => r.event),
+    ].filter(ev => {
+      if (seen.has(ev.id)) return false
+      seen.add(ev.id)
+      return true
+    })
+    return { ...a, pieces }
+  })
 
   return (
-    <div className="px-10 py-10 max-w-5xl">
+    <div className="px-10 py-10">
 
       {/* En-tête */}
       <div className="flex items-end justify-between mb-10">
         <div>
-          <p className="text-[10px] font-semibold tracking-[0.25em] uppercase text-gray-300 mb-2">
-            Dashboard
+          <p className="text-[10px] font-semibold tracking-[0.25em] uppercase text-gray-400 mb-2">
+            Programmation
           </p>
           <h1 className="font-serif text-4xl font-bold text-gray-900 leading-none">
             Artistes
@@ -51,55 +66,141 @@ export default async function ArtistesPage() {
         </Link>
       </div>
 
-      {/* Grille / État vide */}
       {artists.length === 0 ? (
         <EmptyState />
       ) : (
-        <div className="grid grid-cols-4 gap-5">
-          {artists.map(artist => (
-            <ArtistCard key={artist.id} artist={artist} />
-          ))}
+        <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+          <table className="w-full text-sm">
+            <thead>
+              <tr style={{ borderBottom: '1px solid #f0eeeb' }}>
+                <th className="text-left px-5 py-3.5 text-[10px] font-semibold tracking-[0.18em] uppercase text-gray-400">
+                  Nom
+                </th>
+                <th className="text-left px-5 py-3.5 text-[10px] font-semibold tracking-[0.18em] uppercase text-gray-400">
+                  Catégorie
+                </th>
+                <th className="text-left px-5 py-3.5 text-[10px] font-semibold tracking-[0.18em] uppercase text-gray-400">
+                  E-mail
+                </th>
+                <th className="text-left px-5 py-3.5 text-[10px] font-semibold tracking-[0.18em] uppercase text-gray-400">
+                  Téléphone
+                </th>
+                <th className="text-left px-5 py-3.5 text-[10px] font-semibold tracking-[0.18em] uppercase text-gray-400">
+                  Pièces associées
+                </th>
+                <th className="px-5 py-3.5" />
+              </tr>
+            </thead>
+            <tbody>
+              {artistsWithPieces.map((artist, i) => (
+                <tr
+                  key={artist.id}
+                  className="group hover:bg-gray-50/60 transition-colors"
+                  style={{ borderTop: i === 0 ? undefined : '1px solid #f5f4f1' }}
+                >
+                  {/* Nom */}
+                  <td className="px-5 py-4">
+                    <div className="flex items-center gap-3">
+                      {artist.photoUrl ? (
+                        <img
+                          src={artist.photoUrl}
+                          alt={artist.name}
+                          className="w-8 h-8 rounded-full object-cover shrink-0"
+                        />
+                      ) : (
+                        <div
+                          className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-xs font-bold"
+                          style={{ backgroundColor: '#f4f3f0', color: '#b0a898' }}
+                        >
+                          {initials(artist.name)}
+                        </div>
+                      )}
+                      <span className="font-medium text-gray-900">{artist.name}</span>
+                    </div>
+                  </td>
+
+                  {/* Catégorie */}
+                  <td className="px-5 py-4">
+                    {artist.category ? (
+                      <span
+                        className="text-xs font-medium px-2.5 py-1 rounded-full"
+                        style={{ backgroundColor: 'rgba(139,26,26,0.07)', color: '#8B1A1A' }}
+                      >
+                        {artist.category}
+                      </span>
+                    ) : (
+                      <span className="text-gray-300 text-xs">—</span>
+                    )}
+                  </td>
+
+                  {/* E-mail */}
+                  <td className="px-5 py-4">
+                    {artist.email ? (
+                      <a
+                        href={`mailto:${artist.email}`}
+                        className="text-gray-600 hover:text-gray-900 transition-colors truncate max-w-[180px] block"
+                      >
+                        {artist.email}
+                      </a>
+                    ) : (
+                      <span className="text-gray-300 text-xs">—</span>
+                    )}
+                  </td>
+
+                  {/* Téléphone */}
+                  <td className="px-5 py-4">
+                    {artist.phone ? (
+                      <a
+                        href={`tel:${artist.phone}`}
+                        className="text-gray-600 hover:text-gray-900 transition-colors"
+                      >
+                        {artist.phone}
+                      </a>
+                    ) : (
+                      <span className="text-gray-300 text-xs">—</span>
+                    )}
+                  </td>
+
+                  {/* Pièces associées */}
+                  <td className="px-5 py-4">
+                    {artist.pieces.length > 0 ? (
+                      <div className="flex flex-wrap gap-1.5">
+                        {artist.pieces.slice(0, 2).map(ev => (
+                          <Link
+                            key={ev.id}
+                            href={`/dashboard/spectacles/${ev.id}/modifier`}
+                            className="text-xs px-2 py-0.5 rounded border border-gray-200 text-gray-600 hover:border-gray-400 hover:text-gray-900 transition-colors truncate max-w-[140px]"
+                          >
+                            {ev.title || 'Sans titre'}
+                          </Link>
+                        ))}
+                        {artist.pieces.length > 2 && (
+                          <span className="text-xs text-gray-400 py-0.5">
+                            +{artist.pieces.length - 2}
+                          </span>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-gray-300 text-xs">—</span>
+                    )}
+                  </td>
+
+                  {/* Action */}
+                  <td className="px-5 py-4 text-right">
+                    <Link
+                      href={`/dashboard/artistes/${artist.id}/modifier`}
+                      className="text-xs font-medium text-gray-300 group-hover:text-gray-600 transition-colors"
+                    >
+                      Modifier →
+                    </Link>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
     </div>
-  )
-}
-
-function ArtistCard({ artist }: { artist: Artist }) {
-  return (
-    <Link
-      href={`/dashboard/artistes/${artist.id}/modifier`}
-      className="group flex flex-col items-center gap-4 p-5 rounded-xl hover:bg-gray-50 transition-colors"
-    >
-      {/* Photo */}
-      {artist.photoUrl ? (
-        <img
-          src={artist.photoUrl}
-          alt={artist.name}
-          className="w-20 h-20 rounded-full object-cover shrink-0 ring-2 ring-gray-100 group-hover:ring-gray-200 transition-all"
-        />
-      ) : (
-        <div
-          className="w-20 h-20 rounded-full flex items-center justify-center shrink-0 text-lg font-bold transition-colors"
-          style={{ backgroundColor: '#f4f3f0', color: '#c0b8ae' }}
-        >
-          {initials(artist.name)}
-        </div>
-      )}
-
-      {/* Infos */}
-      <div className="text-center min-w-0 w-full">
-        <p className="font-serif font-semibold text-gray-900 leading-snug text-[15px] truncate">
-          {artist.name}
-        </p>
-        {artist.email && (
-          <p className="text-xs text-gray-400 mt-0.5 truncate">{artist.email}</p>
-        )}
-        {!artist.email && artist.bio && (
-          <p className="text-xs text-gray-400 mt-0.5 line-clamp-1">{artist.bio}</p>
-        )}
-      </div>
-    </Link>
   )
 }
 

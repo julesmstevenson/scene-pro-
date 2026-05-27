@@ -86,6 +86,7 @@ model CreativeTeamMember {
 model Artist {
   id        String   @id @default(cuid())
   name      String
+  category  String?  // ex : Comédien·ne, Metteur en scène, Producteur·rice…
   bio       String?  @db.Text
   photoUrl  String?  @db.Text
   email     String?
