@@ -60,6 +60,16 @@ const navGroups = [
     label: 'Finance',
     items: [
       {
+        href: '/dashboard/ventes',
+        label: 'Ventes',
+        icon: (
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" className="w-[18px] h-[18px] shrink-0">
+            <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
+            <polyline points="16 7 22 7 22 13" />
+          </svg>
+        ),
+      },
+      {
         href: '/dashboard/revendeurs',
         label: 'Revendeurs',
         icon: (
@@ -76,6 +86,16 @@ const navGroups = [
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" className="w-[18px] h-[18px] shrink-0">
             <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
             <line x1="1" y1="10" x2="23" y2="10" />
+          </svg>
+        ),
+      },
+      {
+        href: '/dashboard/tresorerie',
+        label: 'Trésorerie',
+        icon: (
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" className="w-[18px] h-[18px] shrink-0">
+            <path d="M3 3v18h18" />
+            <path d="M7 16l4-5 4 3 5-7" />
           </svg>
         ),
       },

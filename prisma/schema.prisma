@@ -17,12 +17,13 @@ model Event {
   imageUrl    String?     @db.Text
 
   // Fiche artistique
-  author    String?   // Auteur de la pièce
-  director  String?   // Metteur en scène
-  duration  String?   // ex : "1h15", "2h30 avec entracte"
-  genre     String?   // ex : "Comédie", "Drame contemporain"
+  author    String?
+  director  String?
+  duration  String?
+  genre     String?
 
-  cardTemplate String?     @default("classique") // classique | minimal | affiche | moderne
+  cardTemplate String?     @default("classique")
+  featured     Boolean     @default(false)
 
   status    EventStatus @default(DRAFT)
   createdAt DateTime    @default(now())
@@ -32,6 +33,7 @@ model Event {
   priceCategories PriceCategory[]
   castMembers     CastMember[]
   creativeTeam    CreativeTeamMember[]
+  bookings        Booking[]
 }
 
 enum EventStatus {
@@ -45,7 +47,8 @@ model Session {
   date    String // "YYYY-MM-DD"
   time    String // "HH:MM"
 
-  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  event    Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  bookings Booking[]
 }
 
 model PriceCategory {
@@ -54,7 +57,8 @@ model PriceCategory {
   name    String
   price   Int    // centimes
 
-  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  event        Event         @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  bookingLines BookingLine[]
 }
 
 // Comédiens — rôle joué + nom du comédien
@@ -86,7 +90,7 @@ model CreativeTeamMember {
 model Artist {
   id        String   @id @default(cuid())
   name      String
-  category  String?  // ex : Comédien·ne, Metteur en scène, Producteur·rice…
+  category  String?
   bio       String?  @db.Text
   photoUrl  String?  @db.Text
   email     String?
@@ -97,4 +101,50 @@ model Artist {
 
   castRoles     CastMember[]
   creativeRoles CreativeTeamMember[]
+}
+
+// ─── Ventes & Réservations ────────────────────────────────────────────────────
+
+model Customer {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  firstName String?
+  lastName  String?
+  phone     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  bookings Booking[]
+}
+
+model Booking {
+  id          String        @id @default(cuid())
+  customerId  String
+  eventId     String
+  sessionId   String?
+  totalAmount Int           // centimes
+  status      BookingStatus @default(CONFIRMED)
+  createdAt   DateTime      @default(now())
+
+  customer Customer      @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  event    Event         @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  session  Session?      @relation(fields: [sessionId], references: [id], onDelete: SetNull)
+  lines    BookingLine[]
+}
+
+enum BookingStatus {
+  CONFIRMED
+  CANCELLED
+  REFUNDED
+}
+
+model BookingLine {
+  id              String @id @default(cuid())
+  bookingId       String
+  priceCategoryId String
+  quantity        Int
+  unitPrice       Int    // centimes (snapshot au moment de la réservation)
+
+  booking       Booking       @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  priceCategory PriceCategory @relation(fields: [priceCategoryId], references: [id], onDelete: Restrict)
 }
