@@ -477,7 +477,7 @@ export default function VentesPage() {
             </svg>
           </div>
           <div>
-            <p className="text-sm font-semibold text-gray-800 group-hover:text-gray-900">Booster mes ventes</p>
+            <p className="text-sm font-semibold text-gray-800 group-hover:text-gray-900">Optimiser mes ventes</p>
             <p className="text-xs text-gray-400 mt-0.5">Relances, canaux, spectacles à mettre en avant</p>
           </div>
         </button>
@@ -719,7 +719,7 @@ export default function VentesPage() {
       {/* Modal booster mes ventes */}
       {showBoostModal && (
         <InfoModal
-          title="Booster mes ventes"
+          title="Optimiser mes ventes"
           icon={
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6" style={{ color: '#8B1A1A' }}>
               <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
