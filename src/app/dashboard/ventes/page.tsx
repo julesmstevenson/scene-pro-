@@ -343,6 +343,8 @@ export default function VentesPage() {
   const [loading, setLoading] = useState(true)
   const [togglingId, setTogglingId] = useState<string | null>(null)
   const [showModal, setShowModal] = useState(false)
+  const [showOpeSpeciale, setShowOpeSpeciale] = useState(false)
+  const [showBoostModal, setShowBoostModal] = useState(false)
 
   const fetchStats = useCallback(async () => {
     setLoading(true)
@@ -440,6 +442,65 @@ export default function VentesPage() {
           </svg>
           Saisir une vente
         </button>
+      </div>
+
+      {/* Actions rapides */}
+      <div className="grid grid-cols-3 gap-3 mb-8">
+        <button
+          onClick={() => setShowOpeSpeciale(true)}
+          className="group flex items-center gap-4 bg-white rounded-xl px-5 py-4 border border-gray-100 shadow-sm hover:border-gray-200 hover:shadow-md transition-all text-left"
+        >
+          <div
+            className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0 transition-colors"
+            style={{ backgroundColor: 'rgba(139,26,26,0.07)' }}
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5" style={{ color: '#8B1A1A' }}>
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+            </svg>
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-gray-800 group-hover:text-gray-900">Opération spéciale</p>
+            <p className="text-xs text-gray-400 mt-0.5">Promo, offre groupée, code remise</p>
+          </div>
+        </button>
+
+        <button
+          onClick={() => setShowBoostModal(true)}
+          className="group flex items-center gap-4 bg-white rounded-xl px-5 py-4 border border-gray-100 shadow-sm hover:border-gray-200 hover:shadow-md transition-all text-left"
+        >
+          <div
+            className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
+            style={{ backgroundColor: 'rgba(139,26,26,0.07)' }}
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5" style={{ color: '#8B1A1A' }}>
+              <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+            </svg>
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-gray-800 group-hover:text-gray-900">Booster mes ventes</p>
+            <p className="text-xs text-gray-400 mt-0.5">Relances, canaux, spectacles à mettre en avant</p>
+          </div>
+        </button>
+
+        <a
+          href="/dashboard/revendeurs"
+          className="group flex items-center gap-4 bg-white rounded-xl px-5 py-4 border border-gray-100 shadow-sm hover:border-gray-200 hover:shadow-md transition-all text-left"
+        >
+          <div
+            className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
+            style={{ backgroundColor: 'rgba(139,26,26,0.07)' }}
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5" style={{ color: '#8B1A1A' }}>
+              <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
+              <circle cx="9" cy="7" r="4" />
+              <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />
+            </svg>
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-gray-800 group-hover:text-gray-900">Gérer mes revendeurs</p>
+            <p className="text-xs text-gray-400 mt-0.5">Partenaires, quotas, commissions</p>
+          </div>
+        </a>
       </div>
 
       {/* KPI cards */}
@@ -611,7 +672,7 @@ export default function VentesPage() {
         Les spectacles marqués &quot;En vedette&quot; peuvent être mis en avant sur votre page publique.
       </p>
 
-      {/* Modal */}
+      {/* Modal saisir une vente */}
       {showModal && (
         <BookingModal
           onClose={() => setShowModal(false)}
@@ -621,6 +682,117 @@ export default function VentesPage() {
           }}
         />
       )}
+
+      {/* Modal opération spéciale */}
+      {showOpeSpeciale && (
+        <InfoModal
+          title="Opération spéciale"
+          icon={
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6" style={{ color: '#8B1A1A' }}>
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+            </svg>
+          }
+          onClose={() => setShowOpeSpeciale(false)}
+        >
+          <p className="text-sm text-gray-500 leading-relaxed mb-5">
+            Créez des offres limitées dans le temps pour stimuler les ventes sur un spectacle précis.
+          </p>
+          <div className="space-y-3">
+            {[
+              { label: 'Code de réduction', desc: 'Offrez un tarif préférentiel avec un code promo à partager', icon: '🏷️' },
+              { label: 'Offre groupée', desc: 'Tarif réduit à partir de X billets achetés ensemble', icon: '🎟️' },
+              { label: 'Vente flash', desc: 'Prix spécial valable 48h sur les dernières places', icon: '⚡' },
+            ].map(item => (
+              <div key={item.label} className="flex items-start gap-3 p-3.5 rounded-xl border border-gray-100 bg-gray-50/50">
+                <span className="text-lg leading-none mt-0.5">{item.icon}</span>
+                <div>
+                  <p className="text-sm font-semibold text-gray-800">{item.label}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">{item.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          <p className="text-xs text-gray-300 mt-5 text-center">Fonctionnalité à venir — contactez-nous pour en savoir plus.</p>
+        </InfoModal>
+      )}
+
+      {/* Modal booster mes ventes */}
+      {showBoostModal && (
+        <InfoModal
+          title="Booster mes ventes"
+          icon={
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6" style={{ color: '#8B1A1A' }}>
+              <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+            </svg>
+          }
+          onClose={() => setShowBoostModal(false)}
+        >
+          <p className="text-sm text-gray-500 leading-relaxed mb-5">
+            Activez les bons leviers pour remplir votre salle et fidéliser votre public.
+          </p>
+          <div className="space-y-3">
+            {[
+              { label: 'Mettre en avant un spectacle', desc: 'Activez le toggle "En vedette" dans le tableau ci-dessous pour le faire apparaître en priorité sur votre page publique', icon: '⭐' },
+              { label: 'Relancer les clients récurrents', desc: 'Identifiez vos fidèles dans l\'onglet Spectateurs et envoyez-leur une offre exclusive', icon: '🔁' },
+              { label: 'Activer le réseau revendeurs', desc: 'Configurez vos partenaires de distribution dans Gérer mes revendeurs', icon: '🤝' },
+              { label: 'Analyser le panier moyen', desc: 'Ajustez vos tarifs pour maximiser le revenu par réservation', icon: '📊' },
+            ].map(item => (
+              <div key={item.label} className="flex items-start gap-3 p-3.5 rounded-xl border border-gray-100 bg-gray-50/50">
+                <span className="text-lg leading-none mt-0.5">{item.icon}</span>
+                <div>
+                  <p className="text-sm font-semibold text-gray-800">{item.label}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">{item.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </InfoModal>
+      )}
+    </div>
+  )
+}
+
+// ─── Info modal générique ───────────────────────────────────────────────────
+
+function InfoModal({
+  title,
+  icon,
+  onClose,
+  children,
+}: {
+  title: string
+  icon: React.ReactNode
+  onClose: () => void
+  children: React.ReactNode
+}) {
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ backgroundColor: 'rgba(0,0,0,0.45)' }}
+      onClick={e => { if (e.target === e.currentTarget) onClose() }}
+    >
+      <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden">
+        <div className="px-6 py-5 border-b border-gray-100 flex items-center gap-3">
+          <div
+            className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
+            style={{ backgroundColor: 'rgba(139,26,26,0.08)' }}
+          >
+            {icon}
+          </div>
+          <h2 className="font-serif text-xl font-bold text-gray-900 flex-1">{title}</h2>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600 transition-colors"
+            aria-label="Fermer"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" className="w-5 h-5">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+        <div className="p-6">{children}</div>
+      </div>
     </div>
   )
 }
